@@ -1,0 +1,6 @@
+{
+  "name": "TradingMachine",
+  "tagline": "TradingMachine is a mini-trading system simulation written in Java 8, whose components (market data and order simulators, FIX acceptor and initiator, back-end for filled orders) interact by queues and topics.",
+  "body": "### Welcome to the TradingMachine project.\r\nIt's a mini-trading system simulation made of the following components:\r\n\r\n* Market data simulator which randomly builds ask and bid prices for a given symbol and then publishes them on a market data queue every X seconds.\r\n* FIX acceptor which listens on the market data and orders queue and provides order execution. Specifically, it can deal with market, limit and stop orders. While the first will be always filled (no quantity gets provided in the market data, for now), the last two may not always be filled. It'll try to match them based on the current market data for the symbol.\r\n\r\n* FIX initiation which acts as an order router. It listens on the orders queue and forwards them to the FIX acceptor. If the initiator replies with filled orders then it publishes them on a topic.\r\n\r\n* Services layer, made of market data and orders queue publisher and filled orders back-end store (MySql and MongoDB).",
+  "note": "Don't delete this file! It's used internally to help with page regeneration."
+}

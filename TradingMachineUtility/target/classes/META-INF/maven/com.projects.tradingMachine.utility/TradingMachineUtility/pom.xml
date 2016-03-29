@@ -1,0 +1,39 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.projects.tradingMachine.utility</groupId>
+  <artifactId>TradingMachineUtility</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <packaging>jar</packaging>
+
+  <name>TradingMachineUtility</name>
+  <repositories>
+    <repository>
+        <id>MarketceteraRepo</id>
+        <url>http://repo.marketcetera.org/maven</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+    </repository>
+  </repositories>
+  <url>http://maven.apache.org</url>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
+  <dependencies>
+    <dependency>
+	<groupId>org.apache.activemq</groupId>
+	<artifactId>activemq-core</artifactId>
+	<version>5.7.0</version>
+  </dependency>
+  
+  <dependency>
+   <groupId>quickfixj</groupId>
+   <artifactId>quickfixj-all</artifactId>
+   <version>1.6.1</version>
+</dependency>
+  </dependencies>
+</project>

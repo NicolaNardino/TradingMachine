@@ -1,0 +1,13 @@
+2016-03-05 18:15:56 INFO  TradingMachineExecutor:41 - Acceptor registered with JMX, name=org.quickfixj:type=Connector,role=Acceptor,id=1
+2016-03-05 18:15:57 INFO  SessionSchedule:65 - [FIXT.1.1:MyExecutor->MyInitiator1] daily, 00:00:00-UTC - 00:00:00-UTC
+2016-03-05 18:15:57 INFO  SessionSchedule:65 - [FIXT.1.1:MyExecutor->MyInitiator] daily, 00:00:00-UTC - 00:00:00-UTC
+2016-03-05 18:15:57 INFO  SocketAcceptor:259 - SessionTimer started
+2016-03-05 18:15:57 INFO  NetworkingOptions:120 - Socket option: SocketTcpNoDelay=true
+2016-03-05 18:15:57 INFO  NetworkingOptions:120 - Socket option: SocketSynchronousWrites=false
+2016-03-05 18:15:57 INFO  NetworkingOptions:120 - Socket option: SocketSynchronousWriteTimeout=30000
+2016-03-05 18:15:57 INFO  SocketAcceptor:115 - Listening for connections at 0.0.0.0/0.0.0.0:9881 for session(s) [FIXT.1.1:MyExecutor->MyInitiator]
+2016-03-05 18:15:57 INFO  NetworkingOptions:120 - Socket option: SocketTcpNoDelay=true
+2016-03-05 18:15:57 INFO  NetworkingOptions:120 - Socket option: SocketSynchronousWrites=false
+2016-03-05 18:15:57 INFO  NetworkingOptions:120 - Socket option: SocketSynchronousWriteTimeout=30000
+2016-03-05 18:15:57 INFO  SocketAcceptor:115 - Listening for connections at 0.0.0.0/0.0.0.0:9882 for session(s) [FIXT.1.1:MyExecutor->MyInitiator1]
+2016-03-05 18:15:57 INFO  SocketAcceptor:128 - Started QFJ Message Processor

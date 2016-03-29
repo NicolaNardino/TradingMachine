@@ -28,16 +28,40 @@
     <div id="content-wrapper">
       <div class="inner clearfix">
         <section id="main-content">
-          <h3>
-<a id="welcome-to-the-tradingmachine-project" class="anchor" href="#welcome-to-the-tradingmachine-project" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Welcome to the TradingMachine project.</h3>
-
-<p>It's a mini-trading system simulation made of the following components:</p>
+          <p>TradingMachine is a mini-trading system simulation made of the following components:</p>
 
 <ul>
-<li>Market data simulator which randomly builds ask and bid prices for a given symbol and then publishes them on a market data queue every X seconds.</li>
-<li><p>FIX acceptor which listens on the market data and orders queue and provides order execution. Specifically, it can deal with market, limit and stop orders. While the first will be always filled (no quantity gets provided in the market data, for now), the last two may not always be filled. It'll try to match them based on the current market data for the symbol.</p></li>
-<li><p>FIX initiation which acts as an order router. It listens on the orders queue and forwards them to the FIX acceptor. If the initiator replies with filled orders then it publishes them on a topic.</p></li>
-<li><p>Services layer, made of market data and orders queue publisher and filled orders back-end store (MySql and MongoDB).</p></li>
+<li>Market data feed: randomly builds ask and bid prices for a given symbol and then publishes them onto a queue every X seconds.</li>
+<li>Orders feed: randomly builds market, limit and stop orders and then publishes them onto a queue every X seconds.</li>
+<li>FIX acceptor: listens on the market data and orders queues and provides order execution. Specifically, it can deal with market, limit and stop orders. While the first will be always filled (no quantity gets provided in the market data, for now), the last two may not always be filled. It'll try to match them based on the current market data for the symbol.</li>
+<li>FIX initiation: acts as an OMS, routing orders to the acceptor. It listens on the orders queue and forwards them to the FIX acceptor. If the acceptor replies with filled orders then it publishes them on a topic.</li>
+<li>Filled orders back-end store: subscribing to the filled orders topic, it stores them to MongoDB and MySql back-ends.</li>
+</ul>
+
+<p>It uses the following technologies:</p>
+
+<ul>
+<li>Java 8.</li>
+<li>QuickFIX/J.</li>
+<li>ActiveMQ.</li>
+<li>MySql and MongoDB.</li>
+</ul>
+
+<p>In order to run it, run the following classes:</p>
+
+<ul>
+<li>ServicesRunner, which starts the market data, orders feed and filled orders subscriber.</li>
+<li>TradingMachineServer, which starts the FIX acceptor.</li>
+<li>TradingMachineOrderRouter, which startst the OMS and FIX initiator.</li>
+</ul>
+
+<p>Still to come is:</p>
+
+<ul>
+<li>More documentation.</li>
+<li>A trade monitor UI.</li>
+<li>JNDI-based topic and queues. In fact, for now I'm using the custom (very good) ActiveMQ implementation.</li>
+<li>Stop_limit orders matching algorithm.</li>
 </ul>
         </section>
 

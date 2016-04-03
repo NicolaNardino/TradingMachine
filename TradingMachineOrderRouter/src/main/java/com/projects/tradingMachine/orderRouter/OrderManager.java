@@ -5,6 +5,9 @@ import java.util.concurrent.ConcurrentMap;
 
 import com.projects.tradingMachine.utility.order.SimpleOrder;
 
+/**
+ * Traces all orders sent to the acceptor and updates them when come back. 
+ * */
 public final class OrderManager {
 
 	private final ConcurrentMap<String, SimpleOrder> orders;

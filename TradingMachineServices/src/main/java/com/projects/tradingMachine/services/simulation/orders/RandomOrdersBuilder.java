@@ -1,5 +1,6 @@
 package com.projects.tradingMachine.services.simulation.orders;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.IntStream;
@@ -13,7 +14,7 @@ import com.projects.tradingMachine.utility.order.SimpleOrder;
 public final class RandomOrdersBuilder {
 	private static final Random randomGenerator = new Random();
 	
-	public static SimpleOrder build() {
+	public static SimpleOrder build(final List<String> allowedSymbols) {
 		final SimpleOrder order = new SimpleOrder();	
 		order.setSide(randomEnumValue(OrderSide.class));
 		final OrderType randomOrderType = randomEnumValue(OrderType.class);
@@ -24,7 +25,7 @@ public final class RandomOrdersBuilder {
 		}
 		order.setType(randomOrderType);
 		order.setQuantity(randomGenerator.nextInt(1000));
-		order.setSymbol(randomListValue(Utility.AllowedSimbols));
+		order.setSymbol(randomListValue(allowedSymbols));
 		order.setTimeInForce(randomEnumValue(OrderTimeInForce.class));
 		return order;
 	}
@@ -41,6 +42,6 @@ public final class RandomOrdersBuilder {
 	}
 	
 	public static void main(final String[] args) {
-		IntStream.range(0, 10).forEach(i -> System.out.println(RandomOrdersBuilder.build()));
+		IntStream.range(0, 10).forEach(i -> System.out.println(RandomOrdersBuilder.build(Arrays.asList("RIEN", "UBSN", "CSGN"))));
 	}
 }

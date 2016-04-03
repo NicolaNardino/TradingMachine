@@ -1,10 +1,13 @@
 package com.projects.tradingMachine.services.simulation.orders;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import javax.jms.JMSException;
 
@@ -28,9 +31,10 @@ public final class OrdersProducer implements Runnable {
 	
 	@Override
 	public void run() {
+		final List<String> allowedSymbols = Arrays.stream(p.getProperty("allowedSymbols").split(",")).collect(Collectors.toList());
 		while (!Thread.currentThread().isInterrupted()) {
         	try {
-        		activeMQOrdersProducerConfiguration.getProducer().send(activeMQOrdersProducerConfiguration.getSession().createObjectMessage(RandomOrdersBuilder.build()));
+        		activeMQOrdersProducerConfiguration.getProducer().send(activeMQOrdersProducerConfiguration.getSession().createObjectMessage(RandomOrdersBuilder.build(allowedSymbols)));
 				TimeUnit.SECONDS.sleep(Integer.valueOf(p.getProperty("ordersPublishingDelay")));
 			} 
         	catch(final InterruptedException ex) {
@@ -58,7 +62,7 @@ public final class OrdersProducer implements Runnable {
 	public static void main(final String[] args) throws JMSException, Exception {
 		final ExecutorService es = Executors.newFixedThreadPool(1);
 		final Future<?> f = es.submit(new OrdersProducer(Utility.getApplicationProperties("tradingMachineServices.properties")));
-		Thread.sleep(10000);
+		TimeUnit.SECONDS.sleep(10);
 		f.cancel(true);
 		Utility.shutdownExecutorService(es, 1, TimeUnit.SECONDS);
 	}

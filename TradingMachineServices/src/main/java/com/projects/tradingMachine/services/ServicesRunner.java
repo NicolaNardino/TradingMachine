@@ -16,6 +16,15 @@ import com.projects.tradingMachine.services.simulation.marketData.MarketDataProd
 import com.projects.tradingMachine.services.simulation.orders.OrdersProducer;
 import com.projects.tradingMachine.utility.Utility;
 
+/**
+ * Starts all the support services, namely:
+ * 
+ * <ul>
+ * 	<li>MarketDataProducer: it builds random ask and bid prices for a selected range of symbols and sends them to a queue, every X seconds.</li>
+ *  <li>OrdersProducer: it builds random buy/ sell market, limit and stop orders and sends them to a queue, every X seconds.</li>
+ *  <li>FilledOrdersBackEndStore: it subscribes to the FilledOrdersTopic to receive fully filled orders and stores them to MySQL and MongDB databases.</li>
+ * </ul>
+ * */
 public class ServicesRunner {
 
 	private final ExecutorService es;
@@ -41,7 +50,7 @@ public class ServicesRunner {
 	
 	public static void main(String[] args) throws Exception {
 		new ServicesRunner();
-		//Thread.sleep(10000);
+		//TimeUnit.SECONDS.sleep(10);
 		//sr.stop();
 	}
 }

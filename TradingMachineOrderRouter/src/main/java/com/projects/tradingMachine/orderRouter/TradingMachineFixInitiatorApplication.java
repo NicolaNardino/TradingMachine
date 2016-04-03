@@ -48,6 +48,10 @@ import quickfix.field.Symbol;
 import quickfix.field.Text;
 import quickfix.field.TransactTime;
 
+/**
+ * FIX initiator application implementor. It listens to the OrdersQueue for orders to send to the FIX executor.
+ * It finally publishes filled orders to the FilledOrdersTopic.
+ * */
 public class TradingMachineFixInitiatorApplication implements Application, MessageListener, ExceptionListener {
 	private static final Logger logger = LoggerFactory.getLogger(TradingMachineFixInitiatorApplication.class);
 	

@@ -5,8 +5,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -37,8 +35,6 @@ import quickfix.field.ApplVerID;
 public final class Utility {
 
 	private static final Logger logger = LoggerFactory.getLogger(Utility.class);
-	
-	public static final List<String> AllowedSimbols = Arrays.asList("ABBN", "BION", "HBMN", "AEVS", "SAHN", "RO", "RIEN");
 	
 	public enum DestinationType {Queue, Topic}
 	

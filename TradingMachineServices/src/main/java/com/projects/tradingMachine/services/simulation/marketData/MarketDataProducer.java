@@ -1,11 +1,14 @@
 package com.projects.tradingMachine.services.simulation.marketData;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import javax.jms.JMSException;
 
@@ -31,9 +34,10 @@ public final class MarketDataProducer implements Runnable {
 	
 	@Override
 	public void run() {
-		final ArrayList<MarketData> marketDataList = new ArrayList<MarketData>(Utility.AllowedSimbols.size());
+		final List<String> allowedSymbols = Arrays.stream(p.getProperty("allowedSymbols").split(",")).collect(Collectors.toList());
+		final ArrayList<MarketData> marketDataList = new ArrayList<MarketData>(allowedSymbols.size());
 		while (!Thread.currentThread().isInterrupted()) {
-			Utility.AllowedSimbols.forEach(symbol -> {
+			allowedSymbols.forEach(symbol -> {
 				marketDataList.add(new MarketData(symbol, Utility.roundDouble(Random.nextDouble() * 100, 2), Utility.roundDouble(Random.nextDouble() * 100, 2)));
 			});
 			try {
@@ -66,7 +70,7 @@ public final class MarketDataProducer implements Runnable {
 	public static void main(final String[] args) throws JMSException, Exception {
 		final ExecutorService es = Executors.newFixedThreadPool(1);
 		final Future<?> f = es.submit(new MarketDataProducer(Utility.getApplicationProperties("tradingMachineServices.properties")));
-		Thread.sleep(2000);
+		TimeUnit.SECONDS.sleep(10);
 		f.cancel(true);
 		Utility.shutdownExecutorService(es, 1, TimeUnit.SECONDS);
 	}

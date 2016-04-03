@@ -1,40 +1,32 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en-us">
   <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta charset="UTF-8">
     <title>TradingMachine by NicolaNardino</title>
-
-    <link rel="stylesheet" href="stylesheets/styles.css">
-    <link rel="stylesheet" href="stylesheets/github-dark.css">
-    <script src="javascripts/scale.fix.js"></script>
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-
-    <!--[if lt IE 9]>
-    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
   </head>
   <body>
-    <div class="wrapper">
-      <header>
-        <h1>TradingMachine</h1>
-        <p>TradingMachine is a mini-trading system simulation written in Java 8, whose components (market data and order simulators, FIX acceptor and initiator, back-end for filled orders) interact by queues and topics.</p>
-        <p class="view"><a href="https://github.com/NicolaNardino/TradingMachine">View the Project on GitHub <small>NicolaNardino/TradingMachine</small></a></p>
-        <ul>
-          <li><a href="https://github.com/NicolaNardino/TradingMachine/zipball/master">Download <strong>ZIP File</strong></a></li>
-          <li><a href="https://github.com/NicolaNardino/TradingMachine/tarball/master">Download <strong>TAR Ball</strong></a></li>
-          <li><a href="https://github.com/NicolaNardino/TradingMachine">View On <strong>GitHub</strong></a></li>
-        </ul>
-      </header>
-      <section>
-        <p>TradingMachine is a mini-trading system simulation made of the following components:</p>
+    <section class="page-header">
+      <h1 class="project-name">TradingMachine</h1>
+      <h2 class="project-tagline">TradingMachine is a mini-trading system simulation written in Java 8, whose components (market data and order simulators, FIX acceptor and initiator, back-end for filled orders) interact by queues and topics.</h2>
+      <a href="https://github.com/NicolaNardino/TradingMachine" class="btn">View on GitHub</a>
+      <a href="https://github.com/NicolaNardino/TradingMachine/zipball/master" class="btn">Download .zip</a>
+      <a href="https://github.com/NicolaNardino/TradingMachine/tarball/master" class="btn">Download .tar.gz</a>
+    </section>
+
+    <section class="main-content">
+      <p>TradingMachine is a mini-trading system simulation made of the following components:</p>
 
 <ul>
 <li>Market data feed: randomly builds ask and bid prices for a given symbol and then publishes them onto a queue every X seconds.</li>
 <li>Orders feed: randomly builds market, limit and stop orders and then publishes them onto a queue every X seconds.</li>
 <li>FIX acceptor: listens on the market data and orders queues and provides order execution by a matching engine. Specifically, it can deal with market, limit and stop orders. While the first one will be always filled (no quantity gets provided by the market data, for now), the last two may not always be filled. It'll try to match them based on the current market data for the symbol.</li>
 <li>FIX initiation: acts as an OMS, routing orders to the acceptor. It listens on the orders queue and forwards them to the FIX acceptor. If the acceptor replies with filled orders, then it publishes them on a topic.</li>
-<li>Filled orders back-end store: subscribing to the filled orders topic, it stores them to MongoDB and MySql back-ends.</li>
+<li>Filled orders back-end store: subscribing to the filled orders topic, it stores them to MongoDB and MySql back-ends. The scripts to set up the MySQL database, tables and stored procedure, are provided in TradingServices/src/main/resources.</li>
 </ul>
 
 <p>Here it's the high level architecture:</p>
@@ -44,7 +36,7 @@
 <p>Technologies: Java 8, QuickFIX/J (FIX 5.0). ActiveMQ, MongoDB and MySql.
 Development environment: Ubuntu 15, Eclipse Mars.</p>
 
-<p>In order to run it, run the following classes:</p>
+<p>How-to run all components</p>
 
 <ul>
 <li>ServicesRunner, which starts the market data, orders feed and filled orders subscriber.</li>
@@ -52,21 +44,24 @@ Development environment: Ubuntu 15, Eclipse Mars.</p>
 <li>TradingMachineOrderRouter, which startst the OMS and FIX initiator.</li>
 </ul>
 
-<p>Still to come is:</p>
+<h2>
+<a id="upcoming-developments" class="anchor" href="#upcoming-developments" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Upcoming developments</h2>
 
 <ul>
-<li>More project documentation and Javadoc.</li>
-<li>A trade monitor UI.</li>
-<li>JNDI-based topic and queues. In fact, for now I'm using the custom (very good) ActiveMQ implementation.</li>
 <li>Stop_limit orders matching algorithm.</li>
+<li>More project documentation and Javadoc.</li>
+<li>Trade monitor UI.</li>
+<li>JNDI-based topic and queues. In fact, for now I'm using the custom (very good) ActiveMQ implementation.</li>
 </ul>
-      </section>
-    </div>
-    <footer>
-      <p>Project maintained by <a href="https://github.com/NicolaNardino">NicolaNardino</a></p>
-      <p>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></p>
-    </footer>
-    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
-    
+
+      <footer class="site-footer">
+        <span class="site-footer-owner"><a href="https://github.com/NicolaNardino/TradingMachine">TradingMachine</a> is maintained by <a href="https://github.com/NicolaNardino">NicolaNardino</a>.</span>
+
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
+      </footer>
+
+    </section>
+
+  
   </body>
 </html>

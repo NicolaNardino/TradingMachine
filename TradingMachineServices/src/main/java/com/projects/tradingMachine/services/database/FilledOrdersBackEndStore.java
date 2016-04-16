@@ -15,30 +15,36 @@ import com.projects.tradingMachine.services.database.noSql.MongoDBConnection;
 import com.projects.tradingMachine.services.database.noSql.MongoDBManager;
 import com.projects.tradingMachine.services.database.sql.MySqlConnection;
 import com.projects.tradingMachine.services.database.sql.MySqlManager;
+import com.projects.tradingMachine.utility.ServiceLifeCycle;
+import com.projects.tradingMachine.utility.TradingMachineMessageConsumer;
 import com.projects.tradingMachine.utility.Utility;
 import com.projects.tradingMachine.utility.Utility.DestinationType;
-import com.projects.tradingMachine.utility.messaging.ActiveMQConsumerConfiguration;
 import com.projects.tradingMachine.utility.order.SimpleOrder;
 
-public final class FilledOrdersBackEndStore implements MessageListener
+public final class FilledOrdersBackEndStore implements MessageListener, ServiceLifeCycle
 {
 	private static Logger logger = LoggerFactory.getLogger(FilledOrdersBackEndStore.class);
 	
-	private final ActiveMQConsumerConfiguration activeMQOrdersConsumerConfiguration;
+	private final TradingMachineMessageConsumer filledOrdersConsumer;
 	private final DataManager mongoDBManager;
 	private final DataManager mySqlManager; 
 	
 	public FilledOrdersBackEndStore(final Properties p) throws JMSException, ClassNotFoundException, SQLException {
-		activeMQOrdersConsumerConfiguration = Utility.createConsumer(p.getProperty("activeMQ.url"), p.getProperty("activeMQ.filledOrdersTopic"), DestinationType.Topic);
+		filledOrdersConsumer = new TradingMachineMessageConsumer(p.getProperty("activeMQ.url"), p.getProperty("activeMQ.filledOrdersTopic"), DestinationType.Topic, this, null);
 		mongoDBManager = new MongoDBManager(new MongoDBConnection(new DatabaseProperties(p.getProperty("mongoDB.host"), 
 				Integer.valueOf(p.getProperty("mongoDB.port")), p.getProperty("mongoDB.database"))), p.getProperty("mongoDB.collection"));
 		mySqlManager = new MySqlManager(new MySqlConnection(new DatabaseProperties(p.getProperty("mySQL.host"), Integer.valueOf(p.getProperty("mySQL.port")), p.getProperty("mySQL.database"), 
 				p.getProperty("mySQL.userName"), p.getProperty("mySQL.password"))));
-		activeMQOrdersConsumerConfiguration.getConsumer().setMessageListener(this);
 	}
 	
-	public void closeSubscription() throws Exception {
-		activeMQOrdersConsumerConfiguration.close();
+	@Override
+	public void start() throws JMSException {
+		filledOrdersConsumer.start();
+	}
+	
+	@Override
+	public void stop() throws Exception {
+		filledOrdersConsumer.stop();
 		mongoDBManager.close();
 		mySqlManager.close();
 	}
@@ -57,7 +63,8 @@ public final class FilledOrdersBackEndStore implements MessageListener
 	
 	public static void main(final String[] args) throws Exception {
 		FilledOrdersBackEndStore f = new FilledOrdersBackEndStore(Utility.getApplicationProperties("tradingMachineServices.properties"));
+		f.start();
 		Thread.sleep(10000);
-		f.closeSubscription();
+		f.stop();
 	}
 }

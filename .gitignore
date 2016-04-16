@@ -1,0 +1,12 @@
+RemoteSystemsTempFiles/
+.recommenders/
+.metadata/
+TradingMachine/log/
+TradingMachine/target/
+TradingMachineOrderRouter/log/
+TradingMachineOrderRouter/target/
+TradingMachineServices/log/
+TradingMachineServices/target/
+TradingMachineUtility/log/
+TradingMachineUtility/target/
+

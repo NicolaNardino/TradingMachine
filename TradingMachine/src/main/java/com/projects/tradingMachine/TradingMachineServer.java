@@ -3,14 +3,11 @@ package com.projects.tradingMachine;
 import java.io.IOException;
 import java.io.InputStream;
 
-import javax.jms.JMSException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import quickfix.ConfigError;
 import quickfix.DefaultMessageFactory;
-import quickfix.FieldConvertError;
 import quickfix.FileStoreFactory;
 import quickfix.LogFactory;
 import quickfix.MessageFactory;
@@ -27,7 +24,7 @@ public final class TradingMachineServer {
 	private final static Logger log = LoggerFactory.getLogger(TradingMachineServer.class);
 	private final SocketAcceptor acceptor;
 
-	public TradingMachineServer() throws ConfigError, FieldConvertError, IOException, JMSException {
+	public TradingMachineServer() throws Exception {
 		final SessionSettings settings = getSessionSettings();
 		final TradingMachineFixAcceptorApplication application = new TradingMachineFixAcceptorApplication(settings);
 		final MessageStoreFactory messageStoreFactory = new FileStoreFactory(settings);

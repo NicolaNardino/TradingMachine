@@ -14,19 +14,20 @@ import javax.jms.JMSException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.projects.tradingMachine.utility.TradingMachineMessageProducer;
 import com.projects.tradingMachine.utility.Utility;
 import com.projects.tradingMachine.utility.Utility.DestinationType;
-import com.projects.tradingMachine.utility.messaging.ActiveMQProducerConfiguration;
 
 public final class OrdersProducer implements Runnable {
 	private static final Logger logger = LoggerFactory.getLogger(OrdersProducer.class);
-
-	private final ActiveMQProducerConfiguration activeMQOrdersProducerConfiguration;
+	
 	private final Properties p;
+	private final TradingMachineMessageProducer ordersProducer;
 	
 	public OrdersProducer(final Properties p) throws JMSException {
 		this.p = p;
-		activeMQOrdersProducerConfiguration = Utility.createProducer(p.getProperty("activeMQ.url"), p.getProperty("activeMQ.ordersQueue"), DestinationType.Queue);
+		ordersProducer = new TradingMachineMessageProducer(p.getProperty("activeMQ.url"), p.getProperty("activeMQ.ordersQueue"), DestinationType.Queue, null);
+		ordersProducer.start();
 	}
 	
 	@Override
@@ -34,7 +35,7 @@ public final class OrdersProducer implements Runnable {
 		final List<String> allowedSymbols = Arrays.stream(p.getProperty("allowedSymbols").split(",")).collect(Collectors.toList());
 		while (!Thread.currentThread().isInterrupted()) {
         	try {
-        		activeMQOrdersProducerConfiguration.getProducer().send(activeMQOrdersProducerConfiguration.getSession().createObjectMessage(RandomOrdersBuilder.build(allowedSymbols)));
+        		ordersProducer.getProducer().send(ordersProducer.getSession().createObjectMessage(RandomOrdersBuilder.build(allowedSymbols)));
 				TimeUnit.SECONDS.sleep(Integer.valueOf(p.getProperty("ordersPublishingDelay")));
 			} 
         	catch(final InterruptedException ex) {
@@ -47,12 +48,9 @@ public final class OrdersProducer implements Runnable {
 		closeSubscription();
 	}
 
-	public void closeSubscription() {
+	private void closeSubscription() {
 		try {
-			if (activeMQOrdersProducerConfiguration.getConnection() != null) {
-				logger.info("Producer JMS Connection closed");
-				activeMQOrdersProducerConfiguration.getConnection().close();
-			}
+			ordersProducer.stop();
 		}
 		catch(final Exception ex) {
 			throw new RuntimeException(ex);

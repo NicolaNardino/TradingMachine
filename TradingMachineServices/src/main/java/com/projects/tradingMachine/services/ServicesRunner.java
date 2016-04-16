@@ -32,20 +32,31 @@ public class ServicesRunner {
 	private final Future<?> ordersProducerFuture;
 	private final Future<?> marketDataProducerFuture;
 	
+	/**
+	 * Starts all three services. Specifically, it starts the OrdersProducer and MarketDataManager by a thread pool returning future, which will be
+	 * later used to stop the services by sending an interrupt.
+	 * */
 	public ServicesRunner() throws ClassNotFoundException, JMSException, SQLException, FileNotFoundException, IOException {
 		final Properties p = Utility.getApplicationProperties("tradingMachineServices.properties");
 		es = Executors.newFixedThreadPool(2);
 		filledOrdersBackEndStore = new FilledOrdersBackEndStore(p);
+		filledOrdersBackEndStore.start();
 		ordersProducerFuture = es.submit(new OrdersProducer(p));
 		marketDataProducerFuture = es.submit(new MarketDataProducer(p));
 	}
 	
+	/**
+	 * Stops all services.
+	 * */
 	public void stop() throws Exception {
-		filledOrdersBackEndStore.closeSubscription();
-		ordersProducerFuture.cancel(true);
-		marketDataProducerFuture.cancel(true);
-		Utility.shutdownExecutorService(es, 5, TimeUnit.SECONDS); 
-		//thread pool gets shut down by ExecutorService.shutdown, not shutdownNow which would have cancelled by running tasks.
+		try {
+			filledOrdersBackEndStore.stop();
+			ordersProducerFuture.cancel(true);
+			marketDataProducerFuture.cancel(true);	
+		}
+		finally {
+			Utility.shutdownExecutorService(es, 5, TimeUnit.SECONDS); //thread pool gets shut down by ExecutorService.shutdown, not shutdownNow which would have cancelled by running tasks.	
+		}
 	}
 	
 	public static void main(String[] args) throws Exception {

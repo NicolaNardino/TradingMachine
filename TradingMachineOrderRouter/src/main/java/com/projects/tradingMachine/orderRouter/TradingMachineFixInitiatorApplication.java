@@ -15,10 +15,10 @@ import javax.jms.ObjectMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.projects.tradingMachine.utility.TradingMachineMessageConsumer;
+import com.projects.tradingMachine.utility.TradingMachineMessageProducer;
 import com.projects.tradingMachine.utility.Utility;
 import com.projects.tradingMachine.utility.Utility.DestinationType;
-import com.projects.tradingMachine.utility.messaging.ActiveMQConsumerConfiguration;
-import com.projects.tradingMachine.utility.messaging.ActiveMQProducerConfiguration;
 import com.projects.tradingMachine.utility.order.SimpleOrder;
 
 import quickfix.Application;
@@ -57,8 +57,8 @@ public class TradingMachineFixInitiatorApplication implements Application, Messa
 	
 	private final SessionSettings settings;
 	private final OrderManager orderManager;
-	private final ActiveMQConsumerConfiguration activeMQOrdersConsumerConfiguration;
-	private final ActiveMQProducerConfiguration activeMQOrdersProducerConfiguration;
+	private final TradingMachineMessageConsumer ordersConsumer;
+	private final TradingMachineMessageProducer filledOrdersProducer;
 	private final Set<SessionID> loggedOnSessions;
 	
 	public TradingMachineFixInitiatorApplication(final SessionSettings settings) throws JMSException, FileNotFoundException, IOException {
@@ -66,10 +66,10 @@ public class TradingMachineFixInitiatorApplication implements Application, Messa
 		final Properties p = Utility.getApplicationProperties("tradingMachineOrderRouter.properties");
 		orderManager = new OrderManager();
 		loggedOnSessions = new HashSet<SessionID>();
-		activeMQOrdersConsumerConfiguration = Utility.createConsumer(p.getProperty("activeMQ.url"), p.getProperty("activeMQ.ordersQueue"), DestinationType.Queue);
-		activeMQOrdersConsumerConfiguration.getConsumer().setMessageListener(this);
-		activeMQOrdersConsumerConfiguration.getConnection().setExceptionListener(this);
-		activeMQOrdersProducerConfiguration = Utility.createProducer(p.getProperty("activeMQ.url"), p.getProperty("activeMQ.filledOrdersTopic"), DestinationType.Topic);
+		ordersConsumer = new TradingMachineMessageConsumer(p.getProperty("activeMQ.url"), p.getProperty("activeMQ.ordersQueue"), DestinationType.Queue, this, this);
+		ordersConsumer.start();
+		filledOrdersProducer = new TradingMachineMessageProducer(p.getProperty("activeMQ.url"), p.getProperty("activeMQ.filledOrdersTopic"), DestinationType.Topic, null);
+		filledOrdersProducer.start();
 	}
 	
 	@Override
@@ -197,7 +197,7 @@ public class TradingMachineFixInitiatorApplication implements Application, Messa
         	break;
         }
         if (ordStatus == OrdStatus.FILLED)
-        	activeMQOrdersProducerConfiguration.getProducer().send(activeMQOrdersProducerConfiguration.getSession().createObjectMessage(order));
+        	filledOrdersProducer.getProducer().send(filledOrdersProducer.getSession().createObjectMessage(order));
         orderManager.updateOrder(order);
     }
 
@@ -224,7 +224,7 @@ public class TradingMachineFixInitiatorApplication implements Application, Messa
 		logger.warn(jmsEx.getMessage());
 	}
 	
-	public void closeOrdersConsumer() {
-		activeMQOrdersConsumerConfiguration.close();
+	public void closeOrdersConsumer() throws JMSException {
+		ordersConsumer.stop();
 	}
 }

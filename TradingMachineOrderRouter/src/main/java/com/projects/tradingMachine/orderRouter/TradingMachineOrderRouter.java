@@ -21,6 +21,9 @@ import quickfix.Session;
 import quickfix.SessionSettings;
 import quickfix.SocketInitiator;
 
+/**
+ * Starts the FIX initiator
+ * */
 public class TradingMachineOrderRouter {
 	private static final Logger logger = LoggerFactory.getLogger(TradingMachineOrderRouter.class);
 	private static final CountDownLatch monitorLatch = new CountDownLatch(1);

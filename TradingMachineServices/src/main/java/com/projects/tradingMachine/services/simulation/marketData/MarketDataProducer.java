@@ -15,21 +15,22 @@ import javax.jms.JMSException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.projects.tradingMachine.utility.TradingMachineMessageProducer;
 import com.projects.tradingMachine.utility.Utility;
 import com.projects.tradingMachine.utility.Utility.DestinationType;
 import com.projects.tradingMachine.utility.marketData.MarketData;
-import com.projects.tradingMachine.utility.messaging.ActiveMQProducerConfiguration;
 
 public final class MarketDataProducer implements Runnable {
 	private static Logger logger = LoggerFactory.getLogger(MarketDataProducer.class);
 	
-	private final ActiveMQProducerConfiguration activeMQMarketDataProducerConfiguration;
+	private final TradingMachineMessageProducer marketDataProducer;
 	private final Properties p;
 	private static final java.util.Random Random = new java.util.Random();
 	
 	public MarketDataProducer(final Properties p) throws JMSException {
 		this.p = p;
-		activeMQMarketDataProducerConfiguration = Utility.createProducer(p.getProperty("activeMQ.url"), p.getProperty("activeMQ.marketDataQueue"), DestinationType.Queue);
+		marketDataProducer = new TradingMachineMessageProducer(p.getProperty("activeMQ.url"), p.getProperty("activeMQ.marketDataQueue"), DestinationType.Queue, null);
+		marketDataProducer.start();
 	}
 	
 	@Override
@@ -41,8 +42,8 @@ public final class MarketDataProducer implements Runnable {
 				marketDataList.add(new MarketData(symbol, Utility.roundDouble(Random.nextDouble() * 100, 2), Utility.roundDouble(Random.nextDouble() * 100, 2)));
 			});
 			try {
-				activeMQMarketDataProducerConfiguration.getProducer().
-				send(activeMQMarketDataProducerConfiguration.getSession().createObjectMessage(marketDataList));
+				marketDataProducer.getProducer().
+				send(marketDataProducer.getSession().createObjectMessage(marketDataList));
 				TimeUnit.SECONDS.sleep(Integer.valueOf(p.getProperty("marketDataPublishingDelay")));
 			}
 			catch(final InterruptedException ex) {
@@ -52,17 +53,15 @@ public final class MarketDataProducer implements Runnable {
 				logger.warn("Unable to produce marked data, due to: "+e.getMessage());
 			}
 		}
-		closeSubscription();
+		stop();
 	}
 
-	private void closeSubscription() {
+	private void stop() {
 		try {
-			if (activeMQMarketDataProducerConfiguration.getConnection() != null) {
-				logger.info("Producer JMS Connection closed");
-				activeMQMarketDataProducerConfiguration.getConnection().close();
-			}	
+			marketDataProducer.stop();	
 		}
 		catch(final Exception ex) {
+			logger.warn(ex.getMessage());
 			throw new RuntimeException(ex);
 		}
 	}

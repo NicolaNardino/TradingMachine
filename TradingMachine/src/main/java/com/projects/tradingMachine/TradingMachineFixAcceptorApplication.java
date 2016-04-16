@@ -1,19 +1,13 @@
 package com.projects.tradingMachine;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import javax.jms.JMSException;
-
 import com.projects.tradingMachine.utility.Utility;
 
-import quickfix.ConfigError;
 import quickfix.Dictionary;
 import quickfix.DoNotSend;
-import quickfix.FieldConvertError;
 import quickfix.FieldNotFound;
 import quickfix.IncorrectDataFormat;
 import quickfix.IncorrectTagValue;
@@ -38,10 +32,11 @@ public class TradingMachineFixAcceptorApplication extends quickfix.MessageCracke
     private final ExecutorService executor;
     private final SessionSettings settings;
     
-    public TradingMachineFixAcceptorApplication(final SessionSettings settings) throws ConfigError, FieldConvertError, JMSException, FileNotFoundException, IOException {
+    public TradingMachineFixAcceptorApplication(final SessionSettings settings) throws Exception {
     	this.settings = settings;
         final Properties applicationProperties = Utility.getApplicationProperties("tradingMachine.properties");
 		marketDataManager = new MarketDataManager(applicationProperties);
+		marketDataManager.start();
         executor = Executors.newFixedThreadPool(Integer.valueOf(applicationProperties.getProperty("numberProcessingOrderThreads")));
     }
 

@@ -21,22 +21,22 @@ import com.projects.tradingMachine.utility.Utility.DestinationType;
 public final class OrdersProducer implements Runnable {
 	private static final Logger logger = LoggerFactory.getLogger(OrdersProducer.class);
 	
-	private final Properties p;
+	private final Properties properties;
 	private final TradingMachineMessageProducer ordersProducer;
 	
-	public OrdersProducer(final Properties p) throws JMSException {
-		this.p = p;
-		ordersProducer = new TradingMachineMessageProducer(p.getProperty("activeMQ.url"), p.getProperty("activeMQ.ordersQueue"), DestinationType.Queue, null);
+	public OrdersProducer(final Properties properties) throws JMSException {
+		this.properties = properties;
+		ordersProducer = new TradingMachineMessageProducer(properties.getProperty("activeMQ.url"), properties.getProperty("activeMQ.ordersQueue"), DestinationType.Queue, null);
 		ordersProducer.start();
 	}
 	
 	@Override
 	public void run() {
-		final List<String> allowedSymbols = Arrays.stream(p.getProperty("allowedSymbols").split(",")).collect(Collectors.toList());
+		final List<String> allowedSymbols = Arrays.stream(properties.getProperty("allowedSymbols").split(",")).collect(Collectors.toList());
 		while (!Thread.currentThread().isInterrupted()) {
         	try {
         		ordersProducer.getProducer().send(ordersProducer.getSession().createObjectMessage(RandomOrdersBuilder.build(allowedSymbols)));
-				TimeUnit.SECONDS.sleep(Integer.valueOf(p.getProperty("ordersPublishingDelay")));
+				TimeUnit.SECONDS.sleep(Integer.valueOf(properties.getProperty("ordersPublishingPeriod")));
 			} 
         	catch(final InterruptedException ex) {
 				Thread.currentThread().interrupt();
@@ -45,10 +45,7 @@ public final class OrdersProducer implements Runnable {
 				logger.warn("Failed to produce order, due to: "+e.getMessage());
 			}
         }
-		closeSubscription();
-	}
-
-	private void closeSubscription() {
+		//close subscription.
 		try {
 			ordersProducer.stop();
 		}

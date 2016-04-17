@@ -14,6 +14,7 @@ import javax.jms.JMSException;
 import com.projects.tradingMachine.services.database.FilledOrdersBackEndStore;
 import com.projects.tradingMachine.services.simulation.marketData.MarketDataProducer;
 import com.projects.tradingMachine.services.simulation.orders.OrdersProducer;
+import com.projects.tradingMachine.utility.ServiceLifeCycle;
 import com.projects.tradingMachine.utility.Utility;
 
 /**
@@ -25,34 +26,45 @@ import com.projects.tradingMachine.utility.Utility;
  *  <li>FilledOrdersBackEndStore: it subscribes to the FilledOrdersTopic to receive fully filled orders and stores them to MySQL and MongDB databases.</li>
  * </ul>
  * */
-public class ServicesRunner {
+public final class ServicesRunner implements ServiceLifeCycle {
 
 	private final ExecutorService es;
 	private final FilledOrdersBackEndStore filledOrdersBackEndStore;
-	private final Future<?> ordersProducerFuture;
-	private final Future<?> marketDataProducerFuture;
+	private final Properties properties;
+	private Future<?> ordersProducerFuture;
+	private Future<?> marketDataProducerFuture;
+	private Future<?> statsRunner;
 	
 	/**
-	 * Starts all three services. Specifically, it starts the OrdersProducer and MarketDataManager by a thread pool returning future, which will be
-	 * later used to stop the services by sending an interrupt.
+	 * Sets up the executor service with 3 threads for OrdersProducer, MarketDataProducer and StatsRunner.
 	 * */
-	public ServicesRunner() throws ClassNotFoundException, JMSException, SQLException, FileNotFoundException, IOException {
-		final Properties p = Utility.getApplicationProperties("tradingMachineServices.properties");
-		es = Executors.newFixedThreadPool(2);
-		filledOrdersBackEndStore = new FilledOrdersBackEndStore(p);
+	public ServicesRunner(final Properties properties) throws ClassNotFoundException, JMSException, SQLException, FileNotFoundException, IOException {
+		this.properties = properties;
+		es = Executors.newFixedThreadPool(3);
+		filledOrdersBackEndStore = new FilledOrdersBackEndStore(properties);
+	}
+	
+	/**
+	 * Starts all services.
+	 * */
+	@Override
+	public void start() throws Exception {
+		ordersProducerFuture = es.submit(new OrdersProducer(properties));
+		marketDataProducerFuture = es.submit(new MarketDataProducer(properties));
+		statsRunner = es.submit(new StatsRunner(properties));
 		filledOrdersBackEndStore.start();
-		ordersProducerFuture = es.submit(new OrdersProducer(p));
-		marketDataProducerFuture = es.submit(new MarketDataProducer(p));
 	}
 	
 	/**
 	 * Stops all services.
 	 * */
+	@Override
 	public void stop() throws Exception {
 		try {
 			filledOrdersBackEndStore.stop();
 			ordersProducerFuture.cancel(true);
-			marketDataProducerFuture.cancel(true);	
+			marketDataProducerFuture.cancel(true);
+			statsRunner.cancel(true);
 		}
 		finally {
 			Utility.shutdownExecutorService(es, 5, TimeUnit.SECONDS); //thread pool gets shut down by ExecutorService.shutdown, not shutdownNow which would have cancelled by running tasks.	
@@ -60,8 +72,9 @@ public class ServicesRunner {
 	}
 	
 	public static void main(String[] args) throws Exception {
-		new ServicesRunner();
+		final ServicesRunner servicesRunner = new ServicesRunner(Utility.getApplicationProperties("tradingMachineServices.properties"));
+		servicesRunner.start();
 		//TimeUnit.SECONDS.sleep(10);
-		//sr.stop();
+		//servicesRunner.stop();
 	}
 }

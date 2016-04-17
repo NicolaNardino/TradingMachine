@@ -1,11 +1,14 @@
 package com.projects.tradingMachine.services.database.sql;
 
 import java.sql.CallableStatement;
+import java.util.List;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.projects.tradingMachine.services.database.DataManager;
+import com.projects.tradingMachine.utility.order.OrderType;
 import com.projects.tradingMachine.utility.order.SimpleOrder;
 
 public class MySqlManager implements DataManager {
@@ -48,6 +51,11 @@ public class MySqlManager implements DataManager {
 		}
 	}
 
+	@Override
+	public List<SimpleOrder> getOrders(final Optional<OrderType> orderType) {
+		throw new UnsupportedOperationException("Not yet implemented");
+	}
+	
 	@Override
 	public void close() throws Exception {
 		mySqlConnection.close();

@@ -1,6 +1,7 @@
 package com.projects.tradingMachine.utility.order;
 
 import java.io.Serializable;
+import java.util.Date;
 
 import quickfix.SessionID;
 
@@ -15,8 +16,8 @@ public class SimpleOrder implements Serializable {
     private OrderSide side = OrderSide.BUY;
     private OrderType type = OrderType.MARKET;
     private OrderTimeInForce timeInForce = OrderTimeInForce.DAY;
-    private Double limit = null;
-    private Double stop = null;
+    private Double limitPrice = null;
+    private Double stopPrice = null;
     private double avgPx = 0.0;
     private boolean rejected = false;
     private boolean canceled = false;
@@ -25,15 +26,35 @@ public class SimpleOrder implements Serializable {
     private String ID = null;
     private String originalID = null;
     private static int nextID = 1;
-
+    
+    private Date fillDate;
+    
     public SimpleOrder() {
         ID = Long.valueOf(System.currentTimeMillis() + (nextID++)).toString();
     }
 
+    /**
+     * This constructor is used when the order gets retrieved from the back-end.
+     * */
+    public SimpleOrder(final String ID, final String symbol, final int quantity, final OrderSide side, final OrderType type, 
+    		final OrderTimeInForce timeInForce, final Double limitPrice, final Double stopPrice, final Double price, final String originalID, final Date fillDate) {
+    	this.ID = ID;
+    	this.symbol = symbol;
+    	this.quantity = quantity;
+    	this.side = side;
+    	this.type = type;
+    	this.timeInForce = timeInForce;
+    	this.limitPrice = limitPrice;
+    	this.stopPrice = stopPrice;
+    	this.avgPx = price;
+    	this.originalID = originalID;
+    	this.fillDate = fillDate;
+    }
+    
     public SimpleOrder(final String ID) {
         this.ID = ID;
     }
-
+    
     public SessionID getSessionID() {
         return sessionID;
     }
@@ -99,34 +120,34 @@ public class SimpleOrder implements Serializable {
     }
 
     public Double getLimit() {
-        return limit;
+        return limitPrice;
     }
 
     public void setLimit(final Double limit) {
-        this.limit = limit;
+        this.limitPrice = limit;
     }
 
     public void setLimit(final String limit) {
         if (limit == null || limit.equals("")) {
-            this.limit = null;
+            this.limitPrice = null;
         } else {
-            this.limit = new Double(limit);
+            this.limitPrice = new Double(limit);
         }
     }
 
     public Double getStop() {
-        return stop;
+        return stopPrice;
     }
 
     public void setStop(final Double stop) {
-        this.stop = stop;
+        this.stopPrice = stop;
     }
 
     public void setStop(final String stop) {
         if (stop == null || stop.equals("")) {
-            this.stop = null;
+            this.stopPrice = null;
         } else {
-            this.stop = new Double(stop);
+            this.stopPrice = new Double(stop);
         }
     }
 
@@ -185,6 +206,10 @@ public class SimpleOrder implements Serializable {
     public String getOriginalID() {
         return originalID;
     }
+    
+    public Date getFillDate() {
+    	return fillDate;
+    }
 
 	@Override
 	public int hashCode() {
@@ -197,7 +222,7 @@ public class SimpleOrder implements Serializable {
 		result = prime * result + (canceled ? 1231 : 1237);
 		result = prime * result + executed;
 		result = prime * result + (isNew ? 1231 : 1237);
-		result = prime * result + ((limit == null) ? 0 : limit.hashCode());
+		result = prime * result + ((limitPrice == null) ? 0 : limitPrice.hashCode());
 		result = prime * result + ((message == null) ? 0 : message.hashCode());
 		result = prime * result + open;
 		result = prime * result + ((originalID == null) ? 0 : originalID.hashCode());
@@ -205,7 +230,7 @@ public class SimpleOrder implements Serializable {
 		result = prime * result + (rejected ? 1231 : 1237);
 		result = prime * result + ((sessionID == null) ? 0 : sessionID.hashCode());
 		result = prime * result + ((side == null) ? 0 : side.hashCode());
-		result = prime * result + ((stop == null) ? 0 : stop.hashCode());
+		result = prime * result + ((stopPrice == null) ? 0 : stopPrice.hashCode());
 		result = prime * result + ((symbol == null) ? 0 : symbol.hashCode());
 		result = prime * result + ((timeInForce == null) ? 0 : timeInForce.hashCode());
 		result = prime * result + ((type == null) ? 0 : type.hashCode());
@@ -234,10 +259,10 @@ public class SimpleOrder implements Serializable {
 			return false;
 		if (isNew != other.isNew)
 			return false;
-		if (limit == null) {
-			if (other.limit != null)
+		if (limitPrice == null) {
+			if (other.limitPrice != null)
 				return false;
-		} else if (!limit.equals(other.limit))
+		} else if (!limitPrice.equals(other.limitPrice))
 			return false;
 		if (message == null) {
 			if (other.message != null)
@@ -262,10 +287,10 @@ public class SimpleOrder implements Serializable {
 			return false;
 		if (side != other.side)
 			return false;
-		if (stop == null) {
-			if (other.stop != null)
+		if (stopPrice == null) {
+			if (other.stopPrice != null)
 				return false;
-		} else if (!stop.equals(other.stop))
+		} else if (!stopPrice.equals(other.stopPrice))
 			return false;
 		if (symbol == null) {
 			if (other.symbol != null)
@@ -283,7 +308,7 @@ public class SimpleOrder implements Serializable {
 	public String toString() {
 		return "Order [sessionID=" + sessionID + ", symbol=" + symbol + ", quantity=" + quantity + ", open=" + open
 				+ ", executed=" + executed + ", side=" + side + ", type=" + type + ", timeInForce=" + timeInForce
-				+ ", limit=" + limit + ", stop=" + stop + ", avgPx=" + avgPx + ", rejected=" + rejected + ", canceled="
+				+ ", limit=" + limitPrice + ", stop=" + stopPrice + ", avgPx=" + avgPx + ", rejected=" + rejected + ", canceled="
 				+ canceled + ", isNew=" + isNew + ", message=" + message + ", ID=" + ID + ", originalID=" + originalID
 				+ "]";
 	}

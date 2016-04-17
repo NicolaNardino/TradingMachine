@@ -24,18 +24,18 @@ public final class MarketDataProducer implements Runnable {
 	private static Logger logger = LoggerFactory.getLogger(MarketDataProducer.class);
 	
 	private final TradingMachineMessageProducer marketDataProducer;
-	private final Properties p;
+	private final Properties properties;
 	private static final java.util.Random Random = new java.util.Random();
 	
-	public MarketDataProducer(final Properties p) throws JMSException {
-		this.p = p;
-		marketDataProducer = new TradingMachineMessageProducer(p.getProperty("activeMQ.url"), p.getProperty("activeMQ.marketDataQueue"), DestinationType.Queue, null);
+	public MarketDataProducer(final Properties properties) throws JMSException {
+		this.properties = properties;
+		marketDataProducer = new TradingMachineMessageProducer(properties.getProperty("activeMQ.url"), properties.getProperty("activeMQ.marketDataQueue"), DestinationType.Queue, null);
 		marketDataProducer.start();
 	}
 	
 	@Override
 	public void run() {
-		final List<String> allowedSymbols = Arrays.stream(p.getProperty("allowedSymbols").split(",")).collect(Collectors.toList());
+		final List<String> allowedSymbols = Arrays.stream(properties.getProperty("allowedSymbols").split(",")).collect(Collectors.toList());
 		final ArrayList<MarketData> marketDataList = new ArrayList<MarketData>(allowedSymbols.size());
 		while (!Thread.currentThread().isInterrupted()) {
 			allowedSymbols.forEach(symbol -> {
@@ -44,7 +44,7 @@ public final class MarketDataProducer implements Runnable {
 			try {
 				marketDataProducer.getProducer().
 				send(marketDataProducer.getSession().createObjectMessage(marketDataList));
-				TimeUnit.SECONDS.sleep(Integer.valueOf(p.getProperty("marketDataPublishingDelay")));
+				TimeUnit.SECONDS.sleep(Integer.valueOf(properties.getProperty("marketDataPublishingPeriod")));
 			}
 			catch(final InterruptedException ex) {
 				Thread.currentThread().interrupt();
@@ -53,10 +53,7 @@ public final class MarketDataProducer implements Runnable {
 				logger.warn("Unable to produce marked data, due to: "+e.getMessage());
 			}
 		}
-		stop();
-	}
-
-	private void stop() {
+		//stop producer.
 		try {
 			marketDataProducer.stop();	
 		}

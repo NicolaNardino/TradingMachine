@@ -11,6 +11,9 @@ import com.projects.tradingMachine.utility.order.OrderTimeInForce;
 import com.projects.tradingMachine.utility.order.OrderType;
 import com.projects.tradingMachine.utility.order.SimpleOrder;
 
+/**
+ * Orders randomly built. 
+ * */
 public final class RandomOrdersBuilder {
 	private static final Random randomGenerator = new Random();
 	
@@ -24,7 +27,7 @@ public final class RandomOrdersBuilder {
 			default: break;
 		}
 		order.setType(randomOrderType);
-		order.setQuantity(randomGenerator.nextInt(1000));
+		order.setQuantity(randomGenerator.nextInt(1000) + 1);
 		order.setSymbol(randomListValue(allowedSymbols));
 		order.setTimeInForce(randomEnumValue(OrderTimeInForce.class));
 		return order;

@@ -5,7 +5,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.stream.Collectors;
 
 import org.bson.Document;
 import org.slf4j.Logger;
@@ -80,14 +79,11 @@ public class MongoDBManager implements DataManager {
 	
 	public static void main(final String[] args) throws NumberFormatException, Exception {
 		final Properties p = Utility.getApplicationProperties("tradingMachineServices.properties"); 
-		try(final MongoDBManager mongoDBManager = new MongoDBManager(new MongoDBConnection(new DatabaseProperties(p.getProperty("mongoDB.host"), 
+		try(final DataManager mongoDBManager = new MongoDBManager(new MongoDBConnection(new DatabaseProperties(p.getProperty("mongoDB.host"), 
 				Integer.valueOf(p.getProperty("mongoDB.port")), p.getProperty("mongoDB.database"))), p.getProperty("mongoDB.collection"))) {
 			//System.out.println(mongoDBManager.getOrders(Optional.of(OrderType.STOP)).stream().mapToDouble(SimpleOrder::getAvgPx).summaryStatistics());
-			System.out.println(mongoDBManager.getOrders(Optional.ofNullable(null)).stream().mapToDouble(SimpleOrder::getAvgPx).summaryStatistics());
 			//mongoDBManager.getOrders(Optional.of(OrderType.LIMIT)).stream().map(SimpleOrder::getAvgPx).forEach(System.out::println);
-			System.out.println(mongoDBManager.getOrders(Optional.ofNullable(null)).stream().
-					collect(Collectors.groupingBy(SimpleOrder::getType, Collectors.counting())));
-			
+			//System.out.println(mongoDBManager.getOrders(Optional.ofNullable(null)).stream().collect(Collectors.groupingBy(SimpleOrder::getType, Collectors.counting())));
 		}
 	}
 }

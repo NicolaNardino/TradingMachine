@@ -34,6 +34,7 @@ import quickfix.field.Symbol;
  * */
 public final class MatchingEngine implements Runnable {
 	private static final Logger log = LoggerFactory.getLogger(MatchingEngine.class);
+	
 	private static final AtomicInteger orderIdSequence = new AtomicInteger(0);
     private static final AtomicInteger execIdSequence = new AtomicInteger(0);
     private final MarketDataManager marketDataManager;
@@ -87,7 +88,7 @@ public final class MatchingEngine implements Runnable {
         		final double marketPrice = getMarketPrice(order);
         		if ((limitOrderSide == Side.BUY && Double.compare(marketPrice, limitPrice) <= 0)
                         || (limitOrderSide == Side.SELL && Double.compare(marketPrice, limitPrice) >= 0)) {
-        			log.info("Found filling price for limit order: "+marketPrice+", limit price: "+limitPrice);
+        			log.info("Found filling price for limit order, market price: "+marketPrice+", limit price: "+limitPrice);
         			return marketPrice;
         		}
         		else {
@@ -105,7 +106,7 @@ public final class MatchingEngine implements Runnable {
         		final double marketPrice = getMarketPrice(order);
         		if ((stopOrderPrice == Side.BUY && Double.compare(marketPrice, stopPrice) > 0)
                         || (stopOrderPrice == Side.SELL && Double.compare(marketPrice, stopPrice) < 0)) {
-        			log.info("Found filling price for stop order: "+marketPrice+", limit price: "+stopPrice);
+        			log.info("Found filling price for stop order, market price: "+marketPrice+", limit price: "+stopPrice);
         			return marketPrice;
         		}
         		else {

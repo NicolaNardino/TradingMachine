@@ -26,3 +26,14 @@ BEGIN
     end if;
 END$$
 DELIMITER ;
+
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `getOrders`(pOrderType varchar(20))
+BEGIN
+	if (pOrderType is null) then
+		select * from `ORDER`;
+	else
+		select * from `ORDER`  where type = pOrderType;
+	end if;
+END$$
+DELIMITER ;

@@ -1,8 +1,8 @@
 RemoteSystemsTempFiles/
 .recommenders/
 .metadata/
-TradingMachine/log/
-TradingMachine/target/
+TradingMachineServer/log/
+TradingMachineServer/target/
 TradingMachineOrderRouter/log/
 TradingMachineOrderRouter/target/
 TradingMachineServices/log/

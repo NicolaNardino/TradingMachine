@@ -1,4 +1,4 @@
-package com.projects.tradingMachine;
+package com.projects.tradingMachine.server;
 
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;

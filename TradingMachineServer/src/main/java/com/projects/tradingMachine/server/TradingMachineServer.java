@@ -1,4 +1,4 @@
-package com.projects.tradingMachine;
+package com.projects.tradingMachine.server;
 
 import java.io.IOException;
 import java.io.InputStream;

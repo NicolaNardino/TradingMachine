@@ -1,6 +1,7 @@
 RemoteSystemsTempFiles/
 .recommenders/
 .metadata/
+TradingMachineBinaries
 TradingMachineServer/log/
 TradingMachineServer/target/
 TradingMachineOrderRouter/log/

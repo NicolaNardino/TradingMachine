@@ -5,9 +5,7 @@
     	<version>1.0</version>
    </parent>
   <modelVersion>4.0.0</modelVersion>
-  <groupId>com.projects.tradingMachine</groupId>
   <artifactId>TradingMachineServer</artifactId>
-  <version>1.0</version>
   <name>Trading Machine Server</name>
   <description>Acceptor FIX and matching engines.</description>
   <repositories>
@@ -67,4 +65,28 @@
      <version>1.0</version>
   </dependency>
   </dependencies>
+  <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+        			<groupId>org.apache.maven.plugins</groupId>
+        			<artifactId>maven-dependency-plugin</artifactId>
+        			<executions>
+            			<execution>
+                			<id>default-cli</id>
+                			<phase>package</phase>
+                			<goals>
+                    			<goal>copy-dependencies</goal>
+                			</goals>
+                			<configuration>
+                    			<outputDirectory>${basedir}/../TradingMachineBinaries/Server/lib</outputDirectory>
+          						<overWriteIfNewer>true</overWriteIfNewer>
+          						<includeScope>compile</includeScope>
+                			</configuration>
+            			</execution>
+        			</executions>
+    			</plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
 </project>

@@ -9,9 +9,7 @@
     
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>com.projects.tradingMachine</groupId>
   <artifactId>TradingMachineServices</artifactId>
-  <version>1.0</version>
   <packaging>jar</packaging>
 
   <name>Trading Machine Services</name>
@@ -68,4 +66,29 @@
   			<version>1.0</version>
      </dependency>
   </dependencies>
+  <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+        			<groupId>org.apache.maven.plugins</groupId>
+        			<artifactId>maven-dependency-plugin</artifactId>
+        			<executions>
+            			<execution>
+                			<id>default-cli</id>
+                			<phase>package</phase>
+                			<goals>
+                    			<goal>copy-dependencies</goal>
+                			</goals>
+                			<configuration>
+                    			<outputDirectory>${basedir}/../TradingMachineBinaries/Services/lib</outputDirectory>
+          						<overWriteIfNewer>true</overWriteIfNewer>
+          						<overWriteReleases>false</overWriteReleases>
+			                   <overWriteSnapshots>false</overWriteSnapshots>
+                			</configuration>
+            			</execution>
+        			</executions>
+    			</plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
 </project>

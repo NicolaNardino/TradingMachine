@@ -5,8 +5,6 @@
     	<version>1.0</version>
    </parent>
   <modelVersion>4.0.0</modelVersion>
-  <groupId>com.projects.tradingMachine</groupId>
-  <version>1.0</version>
   <artifactId>TradingMachineOrderRouter</artifactId>
   <name>Trading Machine Order Router</name>
   <repositories>
@@ -66,4 +64,28 @@
   	 <version>1.0</version>
   </dependency>
   </dependencies>
+  <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+        			<groupId>org.apache.maven.plugins</groupId>
+        			<artifactId>maven-dependency-plugin</artifactId>
+        			<executions>
+            			<execution>
+                			<id>default-cli</id>
+                			<phase>package</phase>
+                			<goals>
+                    			<goal>copy-dependencies</goal>
+                			</goals>
+                			<configuration>
+                    			<outputDirectory>${basedir}/../TradingMachineBinaries/OrderRouter/lib</outputDirectory>
+          						<overWriteIfNewer>true</overWriteIfNewer>
+          						<includeScope>compile</includeScope>
+                			</configuration>
+            			</execution>
+        			</executions>
+    			</plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
 </project>

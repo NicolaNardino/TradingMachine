@@ -63,9 +63,12 @@ public final class ServicesRunner implements ServiceLifeCycle {
 	public void stop() throws Exception {
 		try {
 			filledOrdersBackEndStore.stop();
-			ordersProducerFuture.cancel(true);
-			marketDataProducerFuture.cancel(true);
-			statsRunnerFuture.cancel(true);
+			if (ordersProducerFuture != null)
+				ordersProducerFuture.cancel(true);
+			if (marketDataProducerFuture != null)
+				marketDataProducerFuture.cancel(true);
+			if (statsRunnerFuture != null)
+				statsRunnerFuture.cancel(true);
 		}
 		finally {
 			Utility.shutdownExecutorService(es, 5, TimeUnit.SECONDS); //thread pool gets shut down by ExecutorService.shutdown, not shutdownNow which would have cancelled by running tasks.	

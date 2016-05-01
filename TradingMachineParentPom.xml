@@ -15,6 +15,7 @@
         <module>TradingMachineServices</module>
         <module>TradingMachineOrderRouter</module>
         <module>TradingMachineServer</module>
+	<module>TradingMachineMonitorUI</module>
     </modules>
     <build>
         <pluginManagement>

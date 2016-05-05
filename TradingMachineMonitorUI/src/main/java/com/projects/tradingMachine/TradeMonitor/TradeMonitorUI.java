@@ -30,6 +30,11 @@ import com.projects.tradingMachine.utility.Utility;
 import com.projects.tradingMachine.utility.Utility.DestinationType;
 import com.projects.tradingMachine.utility.order.SimpleOrder;
 
+/**
+ * Creates and shows the application whose core is based on a table which gets initially filled with the filled orders stored in a MongoDB collection.
+ * Then, it gets live updated with the filled orders published onto the FilledOrdersTopic.
+ * Upon application shutdown, it closes the MongoDB and topic subscriber connections.
+ * */
 public final class TradeMonitorUI implements MessageListener {
 	private static Logger logger = LoggerFactory.getLogger(TradeMonitorUI.class);
 	private final TradingMachineMessageConsumer filledOrdersConsumer;
@@ -49,7 +54,7 @@ public final class TradeMonitorUI implements MessageListener {
 		filledOrdersConsumer.start();
 	}
 	
-	public void createUI() throws JMSException, FileNotFoundException, IOException {
+	public void show() throws JMSException, FileNotFoundException, IOException {
 		final JFrame frame = new JFrame("Trade Monitor");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);        
 		ordersPanel.setOpaque(true); 
@@ -76,9 +81,9 @@ public final class TradeMonitorUI implements MessageListener {
     @Override
 	public void onMessage(final Message message) {
 		try {
+			//gets the filled order and updates and notifies the table model accordingly.
 			orders.add((SimpleOrder)((ObjectMessage)message).getObject());
-			final AbstractTableModel tableModel = ((AbstractTableModel)ordersPanel.getOrdersTable().getModel());
-			tableModel.fireTableDataChanged();
+			((AbstractTableModel)ordersPanel.getOrdersTable().getModel()).fireTableDataChanged();
 		} catch (final JMSException e) {
 			logger.warn("Failed to get order, due to "+e.getMessage());
 		}
@@ -88,7 +93,7 @@ public final class TradeMonitorUI implements MessageListener {
         javax.swing.SwingUtilities.invokeLater(new Runnable() {
             public void run() {
                 try {
-				 new TradeMonitorUI(Utility.getApplicationProperties("tradeMonitor.properties")).createUI();
+				 new TradeMonitorUI(Utility.getApplicationProperties("tradeMonitor.properties")).show();
 				} catch (final Exception e) {
 					throw new RuntimeException(e);
 				}

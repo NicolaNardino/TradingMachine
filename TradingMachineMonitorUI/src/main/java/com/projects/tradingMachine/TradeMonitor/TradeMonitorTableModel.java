@@ -9,15 +9,19 @@ import javax.swing.table.AbstractTableModel;
 
 import com.projects.tradingMachine.utility.order.SimpleOrder;
 
+/**
+ * Custom table model with the initial data set coming from the orders stored in a MongoDB collection, then incremented with the ones received onto the 
+ * FilledOrdersTopic. 
+ * */
 public final class TradeMonitorTableModel extends AbstractTableModel {
 	private static final long serialVersionUID = 1L;
 	private final String[] columnNames = {"ID", "Symbol", "Quantity", "Side", "Type", "Time in Force", "Fill Price", "Limit Price", "Stop Price", "Fill Date"};
     
-    private final List<SimpleOrder> data;
+    private final List<SimpleOrder> orders;
     
-    public TradeMonitorTableModel(final List<SimpleOrder> initialOrders) throws FileNotFoundException, IOException, JMSException {
+    public TradeMonitorTableModel(final List<SimpleOrder> orders) throws FileNotFoundException, IOException, JMSException {
     	super();
-    	data = initialOrders;
+    	this.orders = orders;
     }
     
     @Override
@@ -27,7 +31,7 @@ public final class TradeMonitorTableModel extends AbstractTableModel {
 
     @Override
     public int getRowCount() {
-        return data.size();
+        return orders.size();
     }
 
     @Override
@@ -38,7 +42,7 @@ public final class TradeMonitorTableModel extends AbstractTableModel {
     @Override
     public Object getValueAt(final int rowId, final int colId) {
     	Object value = null;
-        final SimpleOrder order = data.get(rowId);
+        final SimpleOrder order = orders.get(rowId);
         switch (colId) {
             case 0:
                 value = order.getID();

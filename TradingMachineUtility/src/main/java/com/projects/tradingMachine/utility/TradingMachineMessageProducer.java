@@ -16,11 +16,11 @@ public final class TradingMachineMessageProducer implements ServiceLifeCycle {
 	private final Session session;
 	private final MessageProducer producer;
 	
-	public TradingMachineMessageProducer(final String brokerUrl, final String destinationName, final DestinationType destinationType, 
+	public TradingMachineMessageProducer(final String brokerUrl, final String destinationName, final DestinationType destinationType, final String clientIDSuffix,
 			final ExceptionListener exceptionListener) throws JMSException {
 		final ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(brokerUrl);
         connection = connectionFactory.createConnection();
-        connection.setClientID(destinationName + "Producer");
+        connection.setClientID(destinationName + "Producer_" + clientIDSuffix);
         session = connection.createSession(false, javax.jms.Session.AUTO_ACKNOWLEDGE);
         producer = session.createProducer(destinationType == DestinationType.Queue ?  session.createQueue(destinationName) : session.createTopic(destinationName));
         if (exceptionListener != null)

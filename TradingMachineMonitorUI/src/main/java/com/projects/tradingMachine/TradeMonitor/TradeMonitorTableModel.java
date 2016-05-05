@@ -1,17 +1,21 @@
 package com.projects.tradingMachine.TradeMonitor;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.List;
 
+import javax.jms.JMSException;
 import javax.swing.table.AbstractTableModel;
 
 import com.projects.tradingMachine.utility.order.SimpleOrder;
 
 public final class TradeMonitorTableModel extends AbstractTableModel {
 	private static final long serialVersionUID = 1L;
-	private String[] columnNames = {"ID", "Symbol", "Quantity", "Side", "Type", "Time in Force", "Fill Price", "Limit Price", "Stop Price", "Fill Date"};
+	private final String[] columnNames = {"ID", "Symbol", "Quantity", "Side", "Type", "Time in Force", "Fill Price", "Limit Price", "Stop Price", "Fill Date"};
     
     private final List<SimpleOrder> data;
-    public TradeMonitorTableModel(final List<SimpleOrder> initialOrders) {
+    
+    public TradeMonitorTableModel(final List<SimpleOrder> initialOrders) throws FileNotFoundException, IOException, JMSException {
     	super();
     	data = initialOrders;
     }

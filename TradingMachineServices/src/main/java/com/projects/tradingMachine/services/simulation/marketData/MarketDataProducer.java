@@ -29,7 +29,7 @@ public final class MarketDataProducer implements Runnable {
 	
 	public MarketDataProducer(final Properties properties) throws JMSException {
 		this.properties = properties;
-		marketDataProducer = new TradingMachineMessageProducer(properties.getProperty("activeMQ.url"), properties.getProperty("activeMQ.marketDataQueue"), DestinationType.Queue, null);
+		marketDataProducer = new TradingMachineMessageProducer(properties.getProperty("activeMQ.url"), properties.getProperty("activeMQ.marketDataQueue"), DestinationType.Queue, "MarketDataProducer", null);
 		marketDataProducer.start();
 	}
 	

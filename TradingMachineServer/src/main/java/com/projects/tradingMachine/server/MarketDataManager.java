@@ -27,7 +27,7 @@ public class MarketDataManager implements MessageListener, ServiceLifeCycle {
 	
 	public MarketDataManager(final Properties properties) throws JMSException {
 		marketDataRepository = new ConcurrentHashMap<>();
-		marketDataConsumer =  new TradingMachineMessageConsumer(properties.getProperty("activeMQ.url"), properties.getProperty("activeMQ.marketDataQueue"), DestinationType.Queue, this, null);
+		marketDataConsumer =  new TradingMachineMessageConsumer(properties.getProperty("activeMQ.url"), properties.getProperty("activeMQ.marketDataQueue"), DestinationType.Queue, this, "MarketDataManager", null);
 	}
 	
 	public MarketData get(final String symbol) {

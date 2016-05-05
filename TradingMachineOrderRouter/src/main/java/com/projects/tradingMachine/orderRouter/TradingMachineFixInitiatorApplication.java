@@ -66,9 +66,9 @@ public class TradingMachineFixInitiatorApplication implements Application, Messa
 		final Properties p = Utility.getApplicationProperties("tradingMachineOrderRouter.properties");
 		orderManager = new OrderManager();
 		loggedOnSessions = new HashSet<SessionID>();
-		ordersConsumer = new TradingMachineMessageConsumer(p.getProperty("activeMQ.url"), p.getProperty("activeMQ.ordersQueue"), DestinationType.Queue, this, this);
+		ordersConsumer = new TradingMachineMessageConsumer(p.getProperty("activeMQ.url"), p.getProperty("activeMQ.ordersQueue"), DestinationType.Queue, this, "FixInitiatorApplication", this);
 		ordersConsumer.start();
-		filledOrdersProducer = new TradingMachineMessageProducer(p.getProperty("activeMQ.url"), p.getProperty("activeMQ.filledOrdersTopic"), DestinationType.Topic, null);
+		filledOrdersProducer = new TradingMachineMessageProducer(p.getProperty("activeMQ.url"), p.getProperty("activeMQ.filledOrdersTopic"), DestinationType.Topic, "FixInitiatorApplication", null);
 		filledOrdersProducer.start();
 	}
 	

@@ -1,6 +1,7 @@
 package com.projects.tradingMachine.services.simulation.orders;
 
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.IntStream;
@@ -30,6 +31,7 @@ public final class RandomOrdersBuilder {
 		order.setQuantity(randomGenerator.nextInt(1000) + 1);
 		order.setSymbol(randomListValue(allowedSymbols));
 		order.setTimeInForce(randomEnumValue(OrderTimeInForce.class));
+		order.SetFillDate(new Date());
 		return order;
 	}
 	

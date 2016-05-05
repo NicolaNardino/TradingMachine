@@ -211,6 +211,10 @@ public class SimpleOrder implements Serializable {
     	return fillDate;
     }
 
+    public void SetFillDate(final Date fillDate) {
+    	this.fillDate = fillDate;
+    }
+    
 	@Override
 	public int hashCode() {
 		final int prime = 31;

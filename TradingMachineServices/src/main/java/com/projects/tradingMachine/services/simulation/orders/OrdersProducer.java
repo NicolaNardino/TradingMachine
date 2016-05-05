@@ -26,7 +26,7 @@ public final class OrdersProducer implements Runnable {
 	
 	public OrdersProducer(final Properties properties) throws JMSException {
 		this.properties = properties;
-		ordersProducer = new TradingMachineMessageProducer(properties.getProperty("activeMQ.url"), properties.getProperty("activeMQ.ordersQueue"), DestinationType.Queue, null);
+		ordersProducer = new TradingMachineMessageProducer(properties.getProperty("activeMQ.url"), properties.getProperty("activeMQ.ordersQueue"), DestinationType.Queue, "OrdersProducer", null);
 		ordersProducer.start();
 	}
 	

@@ -28,7 +28,7 @@
     <div id="content-wrapper">
       <div class="inner clearfix">
         <section id="main-content">
-          <p>TradingMachine is a mini-trading system simulation made of the following components:</p>
+          <p>TradingMachine is a mini-trading system simulation made up of the following components:</p>
 
 <ul>
 <li>Market data feed: randomly builds ask and bid prices for a given symbol and then publishes them onto a queue every X seconds.</li>
@@ -38,13 +38,12 @@
 <li>Filled orders back-end store: subscribing to the filled orders topic, it stores them to MongoDB and MySql back-ends. The scripts to set up the MySQL database, tables and stored procedure, are provided in TradingServices/src/main/resources.</li>
 </ul>
 
+<p>It's built on Ubuntu 15.04 and Eclipse Mars by the following technologies: Java 8, QuickFIX/J (FIX 5.0). ActiveMQ, MongoDB and MySql.</p>
+
 <h2>
 <a id="high-level-architecture" class="anchor" href="#high-level-architecture" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>High-level architecture</h2>
 
 <p><img src="https://github.com/NicolaNardino/TradingMachine/wiki/Images/TradingMachineArchitecture.jpg" alt="TradingMachine Architecture"></p>
-
-<p>Technologies: Java 8, QuickFIX/J (FIX 5.0). ActiveMQ, MongoDB and MySql.
-Development environment: Ubuntu 15, Eclipse Mars.</p>
 
 <h2>
 <a id="how-to-run-all-components" class="anchor" href="#how-to-run-all-components" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>How-to run all components</h2>

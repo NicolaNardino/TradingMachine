@@ -1,35 +1,45 @@
 <!DOCTYPE html>
-<html lang="en-us">
+<html>
   <head>
-    <meta charset="UTF-8">
-    <title>TradingMachine by NicolaNardino</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
-    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link href='https://fonts.googleapis.com/css?family=Architects+Daughter' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
     <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
-  </head>
-  <body>
-    <section class="page-header">
-      <h1 class="project-name">TradingMachine</h1>
-      <h2 class="project-tagline">TradingMachine is a mini-trading system simulation written in Java 8, whose components (market data and order simulators, FIX acceptor and initiator, back-end for filled orders) interact by queues and topics.</h2>
-      <a href="https://github.com/NicolaNardino/TradingMachine" class="btn">View on GitHub</a>
-      <a href="https://github.com/NicolaNardino/TradingMachine/zipball/master" class="btn">Download .zip</a>
-      <a href="https://github.com/NicolaNardino/TradingMachine/tarball/master" class="btn">Download .tar.gz</a>
-    </section>
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print">
 
-    <section class="main-content">
-      <p>TradingMachine is a mini-trading system simulation made up of the following components:</p>
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <title>TradingMachine by NicolaNardino</title>
+  </head>
+
+  <body>
+    <header>
+      <div class="inner">
+        <h1>TradingMachine</h1>
+        <h2>TradingMachine is a mini-trading system simulation written in Java 8, whose components (market data and order simulators, FIX acceptor and initiator, back-end for filled orders) interact by queues and topics.</h2>
+        <a href="https://github.com/NicolaNardino/TradingMachine" class="button"><small>View project on</small> GitHub</a>
+      </div>
+    </header>
+
+    <div id="content-wrapper">
+      <div class="inner clearfix">
+        <section id="main-content">
+          <p>TradingMachine is a mini-trading system simulation made up of the following components:</p>
 
 <ul>
 <li>Market data feed: randomly builds ask and bid prices for a given symbol and then publishes them onto a queue every X seconds.</li>
 <li>Orders feed: randomly builds market, limit and stop orders and then publishes them onto a queue every X seconds.</li>
 <li>FIX acceptor: listens on the market data and orders queues and provides order execution by a matching engine. Specifically, it can deal with market, limit and stop orders. While the first one will be always filled (no quantity gets provided by the market data, for now), the last two may not always be filled. It'll try to match them based on the current market data for the symbol.</li>
-<li>FIX initiation: acts as an OMS, routing orders to the acceptor. It listens on the orders queue and forwards them to the FIX acceptor. If the acceptor replies with filled orders, then it publishes them on a topic.</li>
+<li>FIX initiator: acts as an OMS, routing orders to the acceptor. It listens on the orders queue and forwards them to the FIX acceptor. If the acceptor replies with filled orders, then it publishes them on a topic.</li>
 <li>Filled orders back-end store: subscribing to the filled orders topic, it stores them to MongoDB and MySql back-ends. The scripts to set up the MySQL database, tables and stored procedure, are provided in TradingServices/src/main/resources.</li>
+<li>Trade Monitor UI: Java Swing program showing all filled orders from the MongoDB repository along with live orders from the FilleOrdersTopic.</li>
 </ul>
 
-<p>It's built on Ubuntu 15.04 and Eclipse Mars by the following technologies: Java 8, QuickFIX/J (FIX 5.0). ActiveMQ, MongoDB and MySql.</p>
+<p>It's built on Ubuntu 15.04 and Eclipse Mars, using the following technologies: Java 8, QuickFIX/J (FIX 5.0), Maven, ActiveMQ, MongoDB and MySql.</p>
 
 <h2>
 <a id="high-level-architecture" class="anchor" href="#high-level-architecture" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>High-level architecture</h2>
@@ -42,12 +52,13 @@
 <p><img src="https://github.com/NicolaNardino/TradingMachine/wiki/Images/TradeMonitorUI.jpg" alt="Trade Monitor UI"></p>
 
 <h2>
-<a id="how-to-run-all-components" class="anchor" href="#how-to-run-all-components" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>How-to run all components</h2>
+<a id="how-to-run-the-various-components" class="anchor" href="#how-to-run-the-various-components" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>How-to run the various components</h2>
 
 <ul>
-<li>ServicesRunner, which starts the market data, orders feed and filled orders subscriber.</li>
-<li>TradingMachineServer, which starts the FIX acceptor.</li>
-<li>TradingMachineOrderRouter, which startst the OMS and FIX initiator.</li>
+<li>ServicesRunner starts the market data, orders feed and filled orders subscriber. Furthermore, it starts a statistics service which builds various statistics on aggregated data.</li>
+<li>TradingMachineServer starts the FIX acceptor.</li>
+<li>TradingMachineOrderRouter starts the OMS and FIX initiator.</li>
+<li>TradeMonitorUI starts the monitor UI.</li>
 </ul>
 
 <h2>
@@ -55,17 +66,27 @@
 
 <ul>
 <li>Stop_limit orders matching algorithm.</li>
-<li>More project documentation and Javadoc.</li>
+<li>Orders cancellation.</li>
 <li>JNDI-based topic and queues. In fact, for now I'm using the custom (very good) ActiveMQ implementation.</li>
 </ul>
+        </section>
 
-      <footer class="site-footer">
-        <span class="site-footer-owner"><a href="https://github.com/NicolaNardino/TradingMachine">TradingMachine</a> is maintained by <a href="https://github.com/NicolaNardino">NicolaNardino</a>.</span>
+        <aside id="sidebar">
+          <a href="https://github.com/NicolaNardino/TradingMachine/zipball/master" class="button">
+            <small>Download</small>
+            .zip file
+          </a>
+          <a href="https://github.com/NicolaNardino/TradingMachine/tarball/master" class="button">
+            <small>Download</small>
+            .tar.gz file
+          </a>
 
-        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
-      </footer>
+          <p class="repo-owner"><a href="https://github.com/NicolaNardino/TradingMachine"></a> is maintained by <a href="https://github.com/NicolaNardino">NicolaNardino</a>.</p>
 
-    </section>
+          <p>This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the Architect theme by <a href="https://twitter.com/jasonlong">Jason Long</a>.</p>
+        </aside>
+      </div>
+    </div>
 
   
   </body>

@@ -86,4 +86,8 @@ public final class TradeMonitorTableModel extends AbstractTableModel {
     		return Double.class;
 		return valueAt.getClass();
     }
+    
+    public List<SimpleOrder> getOrders() {
+    	return orders;
+    }
 }

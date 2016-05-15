@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import com.projects.tradingMachine.services.database.DataManager;
 import com.projects.tradingMachine.services.database.DatabaseProperties;
 import com.projects.tradingMachine.utility.Utility;
+import com.projects.tradingMachine.utility.marketData.MarketData;
 import com.projects.tradingMachine.utility.order.OrderSide;
 import com.projects.tradingMachine.utility.order.OrderTimeInForce;
 import com.projects.tradingMachine.utility.order.OrderType;
@@ -79,6 +80,11 @@ public class MySqlManager implements DataManager {
 		}
 		logger.info("Number of orders retrieved: "+result.size());
 		return result;
+	}
+	
+	@Override
+	public void addMarketDataItems(final List<MarketData> marketDataItems, final boolean deleteFirst) {
+		throw new UnsupportedOperationException("Not implemented yet.");
 	}
 	
 	@Override

@@ -6,11 +6,14 @@ import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Properties;
+import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.projects.tradingMachine.utility.marketData.MarketData;
 
 import quickfix.DataDictionaryProvider;
 import quickfix.FixVersions;
@@ -23,8 +26,8 @@ import quickfix.SessionNotFound;
 import quickfix.field.ApplVerID;
 
 public final class Utility {
-
 	private static final Logger logger = LoggerFactory.getLogger(Utility.class);
+	private static final Random Random = new Random();
 	
 	public enum DestinationType {Queue, Topic}
 	
@@ -73,5 +76,10 @@ public final class Utility {
         } else {
             return MessageUtils.toApplVerID(beginString);
         }
+    }
+    
+    public static MarketData buildRandomMarketDataItem(final String symbol) {
+    	return new MarketData(symbol, roundDouble(Random.nextDouble() * 100, 2), 
+				Utility.roundDouble(Random.nextDouble() * 100, 2), Random.nextInt(1000), Random.nextInt(1000));
     }
 }

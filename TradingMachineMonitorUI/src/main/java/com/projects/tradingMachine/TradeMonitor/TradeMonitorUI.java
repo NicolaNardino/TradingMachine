@@ -50,7 +50,7 @@ public final class TradeMonitorUI implements MessageListener {
 	
 	public TradeMonitorUI(final Properties p) throws JMSException, FileNotFoundException, IOException {
 		mongoDBManager = new MongoDBManager(new MongoDBConnection(new DatabaseProperties(p.getProperty("mongoDB.host"), 
-				Integer.valueOf(p.getProperty("mongoDB.port")), p.getProperty("mongoDB.database"))), p.getProperty("mongoDB.collection"));
+				Integer.valueOf(p.getProperty("mongoDB.port")), p.getProperty("mongoDB.database"))), p.getProperty("mongoDB.filledOrdersCollection"));
 		filledOrdersConsumer = new TradingMachineMessageConsumer(p.getProperty("activeMQ.url"), 
 				p.getProperty("activeMQ.filledOrdersTopic"), DestinationType.Topic, this, "TradeMonitor", null);
 		orders = mongoDBManager.getOrders(Optional.ofNullable(null)).stream().

@@ -158,15 +158,14 @@ public class TradingMachineFixInitiatorApplication implements Application, Messa
         }
     }
 	
-	private void executionReport(Message message, SessionID sessionID) throws FieldNotFound, JMSException {
+	private void executionReport(final Message message, final SessionID sessionID) throws FieldNotFound, JMSException {
         final SimpleOrder order = orderManager.getOrder(message.getField(new ClOrdID()).getValue());
-        if (order == null) {
+        if (order == null) 
             return;
-        }
         try {
             order.setMessage(message.getField(new Text()).getValue());
-        } catch (final FieldNotFound e) {
-        }
+        } 
+        catch (final FieldNotFound e) {}
         BigDecimal fillSize;
         final LeavesQty leavesQty = new LeavesQty();
         message.getField(leavesQty);
@@ -178,26 +177,25 @@ public class TradingMachineFixInitiatorApplication implements Application, Messa
             order.setExecuted(new Integer(message.getString(CumQty.FIELD)));
             order.setAvgPx(new Double(message.getString(AvgPx.FIELD)));
         }
-
         final char ordStatus = ((OrdStatus) message.getField(new OrdStatus())).getValue();
         switch(ordStatus) {
         case OrdStatus.REJECTED: 
         	order.setRejected(true);
-            order.setOpen(0);
-            break;
+        	order.setOpen(0);
+        	break;
         case OrdStatus.CANCELED:
         case OrdStatus.DONE_FOR_DAY:
         	order.setCanceled(true);
-            order.setOpen(0);
-            break;
+        	order.setOpen(0);
+        	break;
         case OrdStatus.NEW:
-        	if (order.isNew()) {
-                order.setNew(false);
-            }
+        	if (order.isNew()) 
+        		order.setNew(false);
+        	break;
+        case OrdStatus.FILLED:
+        	filledOrdersProducer.getProducer().send(filledOrdersProducer.getSession().createObjectMessage(order));
         	break;
         }
-        if (ordStatus == OrdStatus.FILLED)
-        	filledOrdersProducer.getProducer().send(filledOrdersProducer.getSession().createObjectMessage(order));
         orderManager.updateOrder(order);
     }
 

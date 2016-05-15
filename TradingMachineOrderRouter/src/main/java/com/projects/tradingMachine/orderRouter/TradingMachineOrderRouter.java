@@ -22,7 +22,7 @@ import quickfix.SessionSettings;
 import quickfix.SocketInitiator;
 
 /**
- * Starts the FIX initiator
+ * IX initiator.
  * */
 public class TradingMachineOrderRouter {
 	private static final Logger logger = LoggerFactory.getLogger(TradingMachineOrderRouter.class);

@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.projects.tradingMachine.utility.Utility;
+import com.projects.tradingMachine.utility.marketData.MarketData;
 
 import quickfix.FieldNotFound;
 import quickfix.LogUtil;
@@ -21,16 +22,16 @@ import quickfix.field.LeavesQty;
 import quickfix.field.OrdStatus;
 import quickfix.field.OrdType;
 import quickfix.field.OrderID;
-import quickfix.field.OrderQty;
 import quickfix.field.Price;
 import quickfix.field.Side;
 import quickfix.field.StopPx;
 import quickfix.field.Symbol;
+import quickfix.field.TimeInForce;
 
 /**
  * Given an order and a link to the market data manager, it tries to match limit and stop orders based on the current market data. 
- * It always fills market orders.
- * The market data provides bid and ask prices of a given symbol, not quantities. Which means, orders will be filled, if possible, completely. 
+ * It always fills market orders unless they are FOK and no immediate fill is possible.
+ * The market data provides bid, ask prices and sizes for a given symbol. 
  * */
 public final class MatchingEngine implements Runnable {
 	private static final Logger log = LoggerFactory.getLogger(MatchingEngine.class);
@@ -50,7 +51,6 @@ public final class MatchingEngine implements Runnable {
 	@Override
 	public void run() {
 		try {
-            final OrderQty orderQty = order.getOrderQty();
             final quickfix.fix50.ExecutionReport accept = new quickfix.fix50.ExecutionReport(
             		buildOrderID(), buildExecID(), new ExecType(ExecType.FILL), new OrdStatus(OrdStatus.NEW), order.getSide(), 
             		new LeavesQty(order.getOrderQty().getValue()), new CumQty(0));
@@ -58,76 +58,107 @@ public final class MatchingEngine implements Runnable {
             accept.set(order.getSymbol());
             Utility.sendMessage(sessionID, accept);
             //try to fill now.
-            final Double fillPrice = findFillPrice(order, 100);
-            if (fillPrice != null) {
+            final PriceQuantity priceQuantity = findPriceAndQuantity(order, 100);
+            if (priceQuantity != null) {
             	final quickfix.fix50.ExecutionReport executionReport = new quickfix.fix50.ExecutionReport(
                         buildOrderID(), buildExecID(), new ExecType(ExecType.FILL), new OrdStatus(
-                                OrdStatus.FILLED), order.getSide(), new LeavesQty(0), new CumQty(
-                                orderQty.getValue()));
+                                OrdStatus.FILLED), order.getSide(), new LeavesQty(0), new CumQty(priceQuantity.getQuantity()));
                 executionReport.set(order.getClOrdID());
                 executionReport.set(order.getSymbol());
-                executionReport.set(orderQty);
-                executionReport.set(new LastQty(orderQty.getValue()));
-                executionReport.set(new LastPx(fillPrice));
-                executionReport.set(new AvgPx(fillPrice));
+                executionReport.set(order.getOrderQty());
+                executionReport.set(new LastQty(priceQuantity.getQuantity()));
+                executionReport.set(new LastPx(priceQuantity.getPrice()));
+                executionReport.set(new AvgPx(priceQuantity.getPrice()));
                 Utility.sendMessage(sessionID, executionReport);	
+            }
+            else {//order rejected.
+            	final quickfix.fix50.ExecutionReport executionReport = new quickfix.fix50.ExecutionReport(
+                        buildOrderID(), buildExecID(), new ExecType(ExecType.REJECTED), new OrdStatus(OrdStatus.REJECTED), 
+                        order.getSide(), new LeavesQty(order.getOrderQty().getValue()), new CumQty(0));
+            	executionReport.set(order.getClOrdID());
+            	Utility.sendMessage(sessionID, executionReport);
             }
         } catch (final Exception e) {
             LogUtil.logThrowable(sessionID, e.getMessage(), e);
         }	
 	}
 	
-	private Double findFillPrice(final quickfix.fix50.NewOrderSingle order, final int nrTrials) throws FieldNotFound, InterruptedException {
+	private PriceQuantity findPriceAndQuantity(final quickfix.fix50.NewOrderSingle order, final int maxNrTrials) throws FieldNotFound, InterruptedException {
 		int counter = 0;
+		final int orderQuantity = (int)(order.getOrderQty().getValue());
 		switch(order.getChar(OrdType.FIELD)) {
 		case OrdType.LIMIT: 
 			final double limitPrice = order.getDouble(Price.FIELD);
         	//loop until the limit order price is executable.
         	final char limitOrderSide = order.getChar(Side.FIELD);
-        	while(counter < nrTrials) {
-        		final double marketPrice = getMarketPrice(order);
-        		if ((limitOrderSide == Side.BUY && Double.compare(marketPrice, limitPrice) <= 0)
-                        || (limitOrderSide == Side.SELL && Double.compare(marketPrice, limitPrice) >= 0)) {
-        			log.info("Found filling price for limit order, market price: "+marketPrice+", limit price: "+limitPrice);
-        			return marketPrice;
+        	while(counter < maxNrTrials) {
+        		final PriceQuantity marketPriceQuantity = getMarketPriceQuantity(order);
+        		if (((limitOrderSide == Side.BUY && Double.compare(marketPriceQuantity.getPrice(), limitPrice) <= 0)
+                        || (limitOrderSide == Side.SELL && Double.compare(marketPriceQuantity.getPrice(), limitPrice) >= 0)) && (orderQuantity >= marketPriceQuantity.getQuantity())) {
+        			log.info("Found filling price/ quantity for limit order, market price: "+marketPriceQuantity.getPrice()+", limit price: "+limitPrice+", quantity: "+orderQuantity);
+        			return new PriceQuantity(marketPriceQuantity.getPrice(), order.getOrderQty().getValue());
         		}
         		else {
-        			log.debug("Looping to find filling price for limit order, market price: "+marketPrice+", limit price: "+limitPrice);
+        			if (order.getChar(TimeInForce.FIELD) == TimeInForce.FILL_OR_KILL)
+        				return null;
+        			log.debug("Looping to find filling price for limit order, market price: "+marketPriceQuantity.getQuantity()+", limit price: "+limitPrice);
         			Thread.sleep(500);
         			counter++;
         		}
         	}
-        	return null; //price not found.
+        	return null; //price/ quantity not found.
 		case OrdType.STOP: 
 			final double stopPrice = order.getDouble(StopPx.FIELD);
-    		//loop until the limit order price is executable.
-        	final char stopOrderPrice = order.getChar(Side.FIELD);
-        	while(counter < nrTrials) {
-        		final double marketPrice = getMarketPrice(order);
-        		if ((stopOrderPrice == Side.BUY && Double.compare(marketPrice, stopPrice) > 0)
-                        || (stopOrderPrice == Side.SELL && Double.compare(marketPrice, stopPrice) < 0)) {
-        			log.info("Found filling price for stop order, market price: "+marketPrice+", limit price: "+stopPrice);
-        			return marketPrice;
+    		//loop until the stop order price is executable.
+        	final char stopOrderSide = order.getChar(Side.FIELD);
+        	while(counter < maxNrTrials) {
+        		final PriceQuantity marketPriceQuantity = getMarketPriceQuantity(order);
+        		if (((stopOrderSide == Side.BUY && Double.compare(marketPriceQuantity.getPrice(), stopPrice) > 0)
+                        || (stopOrderSide == Side.SELL && Double.compare(marketPriceQuantity.getPrice(), stopPrice) < 0)) &&  (orderQuantity >= marketPriceQuantity.getQuantity())) {
+        			log.info("Found filling price for stop order, market price: "+marketPriceQuantity.getPrice()+", stop price: "+stopPrice);
+        			return new PriceQuantity(marketPriceQuantity.getPrice(), order.getOrderQty().getValue());
         		}
         		else {
-        			log.debug("Looping to find filling price for stop order, market price: "+marketPrice+", limit price: "+stopPrice);
+        			log.debug("Looping to find filling price for stop order, market price: "+marketPriceQuantity.getPrice()+", stop price: "+stopPrice);
         			Thread.sleep(500);
         			counter++;
         		}
         	}
-        	return null; //price not found.
-        	default: return getMarketPrice(order);
+        	return null; //price/ quantity not found.
+        	default: 
+        		final PriceQuantity marketPriceQuantity = getMarketPriceQuantity(order);
+        		if (marketPriceQuantity.getQuantity() < orderQuantity && order.getChar(TimeInForce.FIELD) == TimeInForce.FILL_OR_KILL)
+            		return null;	
+            	return new PriceQuantity(marketPriceQuantity.getPrice(), orderQuantity);
 		}
     }
 	
-	private double getMarketPrice(final Message message) throws FieldNotFound {
+	private static class PriceQuantity {
+		private final double price;
+		private final double quantity;
+		
+		public PriceQuantity(final double price, final double quantity) {
+			this.price = price;
+			this.quantity = quantity;
+		}
+		
+		public double getPrice() {
+			return price;
+		}
+		public double getQuantity() {
+			return quantity;
+		}
+	}
+	
+	private PriceQuantity getMarketPriceQuantity(final Message message) throws FieldNotFound {
+		final MarketData marketDataPrice = marketDataManager.get(message.getString(Symbol.FIELD));
 		switch (message.getChar(Side.FIELD)) {
-		case Side.BUY:
-			return marketDataManager.get(message.getString(Symbol.FIELD)).getAsk();
-		case Side.SELL:
-			return marketDataManager.get(message.getString(Symbol.FIELD)).getBid();
-		default:
-			throw new RuntimeException("Invalid order side: " + message.getChar(Side.FIELD));
+			case Side.BUY:
+				return new PriceQuantity(marketDataPrice.getAsk(), marketDataPrice.getAskSize());
+			case Side.SELL:
+				return new PriceQuantity(marketDataPrice.getBid(), marketDataPrice.getBidSize());
+			default:
+				throw new RuntimeException("Invalid order side: " + message.getChar(Side.FIELD));
 		}
 	}
 	

@@ -2,7 +2,6 @@ package com.projects.tradingMachine.server;
 
 import java.util.ArrayList;
 import java.util.Properties;
-import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -21,7 +20,6 @@ import com.projects.tradingMachine.utility.marketData.MarketData;
  *  Receives market data from a given queue.
  * */
 public class MarketDataManager implements MessageListener, ServiceLifeCycle {
-	private static final Random Random = new Random();
 	private final TradingMachineMessageConsumer marketDataConsumer;
 	private final ConcurrentMap<String, MarketData> marketDataRepository;
 	
@@ -31,7 +29,7 @@ public class MarketDataManager implements MessageListener, ServiceLifeCycle {
 	}
 	
 	public MarketData get(final String symbol) {
-		return marketDataRepository.getOrDefault(symbol, new MarketData(symbol, Utility.roundDouble(Random.nextDouble() * 100, 2), Utility.roundDouble(Random.nextDouble() * 100, 2)));
+		return marketDataRepository.getOrDefault(symbol, Utility.buildRandomMarketDataItem(symbol));
 	}
 	
 	@Override
@@ -39,9 +37,8 @@ public class MarketDataManager implements MessageListener, ServiceLifeCycle {
 		try {
 			@SuppressWarnings("unchecked")
 			final ArrayList<MarketData> marketDataList = (ArrayList<MarketData>)((ObjectMessage)message).getObject();
-			marketDataList.forEach(marketDataItem -> {
-				marketDataRepository.merge(marketDataItem.getSymbol(), marketDataItem, (oldValue, newValue) -> marketDataItem);
-			});
+			marketDataList.forEach(marketDataItem -> 
+									marketDataRepository.merge(marketDataItem.getSymbol(), marketDataItem, (oldValue, newValue) -> marketDataItem));
 		} catch (final JMSException e) {
 			throw new RuntimeException(e);
 		}

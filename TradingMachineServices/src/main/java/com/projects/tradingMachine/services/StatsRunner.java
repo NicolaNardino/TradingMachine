@@ -37,7 +37,7 @@ public final class StatsRunner implements Runnable {
 	public StatsRunner(final Properties properties) {
 		this.properties = properties;
 		mongoDBManager = new MongoDBManager(new MongoDBConnection(new DatabaseProperties(properties.getProperty("mongoDB.host"), 
-				Integer.valueOf(properties.getProperty("mongoDB.port")), properties.getProperty("mongoDB.database"))), properties.getProperty("mongoDB.collection"));
+				Integer.valueOf(properties.getProperty("mongoDB.port")), properties.getProperty("mongoDB.database"))), properties.getProperty("mongoDB.filledOrdersCollection"));
 	}
 	
 	@Override

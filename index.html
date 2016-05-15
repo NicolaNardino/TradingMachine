@@ -31,9 +31,9 @@
           <p>TradingMachine is a mini-trading system simulation made up of the following components:</p>
 
 <ul>
-<li>Market data feed: randomly builds ask and bid prices for a given symbol and then publishes them onto a queue every X seconds.</li>
+<li>Market data feed: randomly builds ask/ bid prices and ask/ bid sizes for a given symbol and then publishes them onto a queue every X seconds.</li>
 <li>Orders feed: randomly builds market, limit and stop orders and then publishes them onto a queue every X seconds.</li>
-<li>FIX acceptor: listens on the market data and orders queues and provides order execution by a matching engine. Specifically, it can deal with market, limit and stop orders. While the first one will be always filled (no quantity gets provided by the market data, for now), the last two may not always be filled. It'll try to match them based on the current market data for the symbol.</li>
+<li>FIX acceptor: listens on the market data and orders queues and provides order execution by a matching engine. It can deal with market, limit and stop orders. Market orders are always filled unless they're FOK, specifically, a market price will always be available from the market data while the quantity might not match the bid/ ask size. Limit and stop orders will be filled only if their limit/ stop price and quantity match the market data. Limit orders are subject to FOK too.</li>
 <li>FIX initiator: acts as an OMS, routing orders to the acceptor. It listens on the orders queue and forwards them to the FIX acceptor. If the acceptor replies with filled orders, then it publishes them on a topic.</li>
 <li>Filled orders back-end store: subscribing to the filled orders topic, it stores them to MongoDB and MySql back-ends. The scripts to set up the MySQL database, tables and stored procedure, are provided in TradingServices/src/main/resources.</li>
 <li>Trade Monitor UI: Java Swing program showing all filled orders from the MongoDB repository along with live orders from the FilleOrdersTopic.</li>
@@ -66,7 +66,6 @@
 
 <ul>
 <li>Stop_limit orders matching algorithm.</li>
-<li>Orders cancellation.</li>
 <li>JNDI-based topic and queues. In fact, for now I'm using the custom (very good) ActiveMQ implementation.</li>
 </ul>
         </section>

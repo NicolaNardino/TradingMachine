@@ -27,7 +27,7 @@ public class SimpleOrder implements Serializable {
     private String ID = null;
     private String originalID = null;
     
-    private Date fillDate;
+    private Date storeDate;
     private int marketDataID;
     
     public SimpleOrder() {
@@ -38,7 +38,7 @@ public class SimpleOrder implements Serializable {
      * This constructor is used when the order gets retrieved from the back-end.
      * */
     public SimpleOrder(final String ID, final String symbol, final int quantity, final OrderSide side, final OrderType type, 
-    		final OrderTimeInForce timeInForce, final Double limitPrice, final Double stopPrice, final Double price, final String originalID, final Date fillDate) {
+    		final OrderTimeInForce timeInForce, final Double limitPrice, final Double stopPrice, final Double price, final String originalID, final Date storeDate) {
     	this.ID = ID;
     	this.symbol = symbol;
     	this.quantity = quantity;
@@ -49,7 +49,7 @@ public class SimpleOrder implements Serializable {
     	this.stopPrice = stopPrice;
     	this.avgPx = price;
     	this.originalID = originalID;
-    	this.fillDate = fillDate;
+    	this.storeDate = storeDate;
     }
     
     public SimpleOrder(final String ID) {
@@ -164,7 +164,7 @@ public class SimpleOrder implements Serializable {
         this.rejected = rejected;
     }
 
-    public boolean getRejected() {
+    public boolean isRejected() {
         return rejected;
     }
 
@@ -208,12 +208,12 @@ public class SimpleOrder implements Serializable {
         return originalID;
     }
     
-    public Date getFillDate() {
-    	return fillDate;
+    public Date getStoreDate() {
+    	return storeDate;
     }
 
-    public void SetFillDate(final Date fillDate) {
-    	this.fillDate = fillDate;
+    public void SetStoreDate(final Date storeDate) {
+    	this.storeDate = storeDate;
     }
     
 	public int getMarketDataID() {

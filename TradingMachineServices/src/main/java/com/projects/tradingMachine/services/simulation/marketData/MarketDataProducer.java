@@ -40,7 +40,7 @@ public final class MarketDataProducer implements Runnable {
 		marketDataProducer.start();
 		mongoDBManager = new MongoDBManager(new MongoDBConnection(new DatabaseProperties(properties.getProperty("mongoDB.host"), 
 				Integer.valueOf(properties.getProperty("mongoDB.port")), properties.getProperty("mongoDB.database"))), 
-				properties.getProperty("mongoDB.filledOrdersCollection"), properties.getProperty("mongoDB.marketDataCollection"));
+				properties.getProperty("mongoDB.executedOrdersCollection"), properties.getProperty("mongoDB.marketDataCollection"));
 		executorService = Executors.newSingleThreadExecutor();
 	}
 	

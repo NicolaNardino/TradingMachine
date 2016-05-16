@@ -30,9 +30,9 @@ public final class FilledOrdersBackEndStore implements MessageListener, ServiceL
 	private final DataManager mySqlManager; 
 	
 	public FilledOrdersBackEndStore(final Properties p) throws JMSException, ClassNotFoundException, SQLException {
-		filledOrdersConsumer = new TradingMachineMessageConsumer(p.getProperty("activeMQ.url"), p.getProperty("activeMQ.filledOrdersTopic"), DestinationType.Topic, this, "BackEnd", null);
+		filledOrdersConsumer = new TradingMachineMessageConsumer(p.getProperty("activeMQ.url"), p.getProperty("activeMQ.executedOrdersTopic"), DestinationType.Topic, this, "BackEnd", null, null);
 		mongoDBManager = new MongoDBManager(new MongoDBConnection(new DatabaseProperties(p.getProperty("mongoDB.host"), 
-				Integer.valueOf(p.getProperty("mongoDB.port")), p.getProperty("mongoDB.database"))), p.getProperty("mongoDB.filledOrdersCollection"));
+				Integer.valueOf(p.getProperty("mongoDB.port")), p.getProperty("mongoDB.database"))), p.getProperty("mongoDB.executedOrdersCollection"));
 		mySqlManager = new MySqlManager(new MySqlConnection(new DatabaseProperties(p.getProperty("mySQL.host"), Integer.valueOf(p.getProperty("mySQL.port")), p.getProperty("mySQL.database"), 
 				p.getProperty("mySQL.userName"), p.getProperty("mySQL.password"))));
 	}

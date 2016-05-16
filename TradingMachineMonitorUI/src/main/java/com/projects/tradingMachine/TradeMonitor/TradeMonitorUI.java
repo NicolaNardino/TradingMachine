@@ -43,18 +43,17 @@ public final class TradeMonitorUI implements MessageListener {
 	private static Logger logger = LoggerFactory.getLogger(TradeMonitorUI.class);
 	private final TradingMachineMessageConsumer filledOrdersConsumer;
 	private final MongoDBManager mongoDBManager;
-	private final Comparator<? super SimpleOrder> dateComparator = (c1, c2) -> c1.getFillDate().compareTo(c2.getFillDate());
+	private final Comparator<? super SimpleOrder> dateComparator = (c1, c2) -> c1.getStoreDate().compareTo(c2.getStoreDate());
 	private final List<SimpleOrder> orders;
 	private final TradeMonitorTablePanel ordersPanel;
-	private static final boolean isWithoutLiveFeed = false;
+	private static final boolean isWithoutLiveFeed = true;
 	
 	public TradeMonitorUI(final Properties p) throws JMSException, FileNotFoundException, IOException {
 		mongoDBManager = new MongoDBManager(new MongoDBConnection(new DatabaseProperties(p.getProperty("mongoDB.host"), 
-				Integer.valueOf(p.getProperty("mongoDB.port")), p.getProperty("mongoDB.database"))), p.getProperty("mongoDB.filledOrdersCollection"));
+				Integer.valueOf(p.getProperty("mongoDB.port")), p.getProperty("mongoDB.database"))), p.getProperty("mongoDB.executedOrdersCollection"));
 		filledOrdersConsumer = new TradingMachineMessageConsumer(p.getProperty("activeMQ.url"), 
-				p.getProperty("activeMQ.filledOrdersTopic"), DestinationType.Topic, this, "TradeMonitor", null);
-		orders = mongoDBManager.getOrders(Optional.ofNullable(null)).stream().
-		sorted(dateComparator.reversed()).collect(Collectors.toList());//sorting isn't strictly needed because it'd have been done by the table sorter.
+				p.getProperty("activeMQ.executedOrdersTopic"), DestinationType.Topic, this, "TradeMonitor", "Status = 'FILLED'", null);
+		orders = mongoDBManager.getOrders(Optional.ofNullable(null)).stream().filter(o -> !o.isRejected()).sorted(dateComparator.reversed()).collect(Collectors.toList());//sorting isn't strictly needed because it'd have been done by the table sorter.
 		ordersPanel = new TradeMonitorTablePanel(orders);
 		filledOrdersConsumer.start();
 		if (isWithoutLiveFeed)

@@ -26,37 +26,37 @@ public final class MongoDBManager implements DataManager {
 	private static Logger logger = LoggerFactory.getLogger(MongoDBManager.class);
 	
 	private final MongoDBConnection mongoDBConnection;
-	private final MongoCollection<Document> filledOrdersCollection;
+	private final MongoCollection<Document> executedOrdersCollection;
 	private final MongoCollection<Document> marketDataCollection;
 	
-	public MongoDBManager(final MongoDBConnection mongoDBConnection, final String filledOrdersCollectionName, final String marketDataCollectionName) {
+	public MongoDBManager(final MongoDBConnection mongoDBConnection, final String executedOrdersCollectionName, final String marketDataCollectionName) {
 		this.mongoDBConnection = mongoDBConnection;
-		filledOrdersCollection = mongoDBConnection.getMongoDatabase().getCollection(filledOrdersCollectionName);
+		executedOrdersCollection = mongoDBConnection.getMongoDatabase().getCollection(executedOrdersCollectionName);
 		marketDataCollection = marketDataCollectionName == null ? null : mongoDBConnection.getMongoDatabase().getCollection(marketDataCollectionName);
 	}
 	
-	public MongoDBManager(final MongoDBConnection mongoDBConnection, final String filledOrdersCollectionName) {
-		this(mongoDBConnection, filledOrdersCollectionName, null);
+	public MongoDBManager(final MongoDBConnection mongoDBConnection, final String executedOrdersCollectionName) {
+		this(mongoDBConnection, executedOrdersCollectionName, null);
 	}
 
 	@Override
 	public void storeOrder(final SimpleOrder order) {
-		filledOrdersCollection.replaceOne(new Document("FilledOrder", order.getID()), ConvertSimpleOrderToBSONDocument(order), 
+		executedOrdersCollection.replaceOne(new Document("FilledOrder", order.getID()), ConvertSimpleOrderToBSONDocument(order), 
 				new UpdateOptions().upsert(true));
-		logger.debug(order+" added to collection: "+filledOrdersCollection.toString());
+		logger.debug(order+" added to collection: "+executedOrdersCollection.toString());
 	}
 	
 	@Override
 	public List<SimpleOrder> getOrders(final Optional<OrderType> orderType) {
 		long startTime = System.currentTimeMillis();
 		final List<SimpleOrder> result = new ArrayList<SimpleOrder>();
-		final MongoCursor<Document> cursor = orderType.isPresent() ? filledOrdersCollection.find(new Document("Type", orderType.get().toString())).iterator() : filledOrdersCollection.find().iterator();
+		final MongoCursor<Document> cursor = orderType.isPresent() ? executedOrdersCollection.find(new Document("Type", orderType.get().toString())).iterator() : executedOrdersCollection.find().iterator();
 		try {
 		    while (cursor.hasNext()) {
 		    	final Document doc = cursor.next();
 		    	result.add(new SimpleOrder(doc.getString("ID"), doc.getString("Symbol"), doc.getInteger("Quantity"), 
 		    		 OrderSide.fromString(doc.getString("Side")), OrderType.fromString(doc.getString("Type")), OrderTimeInForce.fromString(doc.getString("TimeInForce")), 
-		    		 doc.getDouble("LimitPrice"), doc.getDouble("StopPrice"), doc.getDouble("Price"), doc.getString("OriginalID"), doc.getDate("FillDate")));
+		    		 doc.getDouble("LimitPrice"), doc.getDouble("StopPrice"), doc.getDouble("Price"), doc.getString("OriginalID"), doc.getDate("StoreDate")));
 		    }
 		} finally {
 		    cursor.close();
@@ -92,7 +92,8 @@ public final class MongoDBManager implements DataManager {
 		        .append("StopPrice", order.getStop())
 		        .append("Price", order.getAvgPx())
 		        .append("OriginalID", order.getOriginalID())
-				.append("FillDate", new Date());
+				.append("StoreDate", new Date())
+				.append("IsRejected", order.isRejected());
 	}
 	
 	private static Document ConvertMarketDataToBSONDocument(final MarketData marketData) {
@@ -108,7 +109,7 @@ public final class MongoDBManager implements DataManager {
 	public static void main(final String[] args) throws NumberFormatException, Exception {
 		final Properties p = Utility.getApplicationProperties("tradingMachineServices.properties"); 
 		try(final DataManager mongoDBManager = new MongoDBManager(new MongoDBConnection(new DatabaseProperties(p.getProperty("mongoDB.host"), 
-				Integer.valueOf(p.getProperty("mongoDB.port")), p.getProperty("mongoDB.database"))), p.getProperty("mongoDB.filledOrdersCollection"))) {
+				Integer.valueOf(p.getProperty("mongoDB.port")), p.getProperty("mongoDB.database"))), p.getProperty("mongoDB.executedOrdersCollection"))) {
 			//System.out.println(mongoDBManager.getOrders(Optional.of(OrderType.STOP)).stream().mapToDouble(SimpleOrder::getAvgPx).summaryStatistics());
 			//mongoDBManager.getOrders(Optional.of(OrderType.LIMIT)).stream().map(SimpleOrder::getAvgPx).forEach(System.out::println);
 			//System.out.println(mongoDBManager.getOrders(Optional.ofNullable(null)).stream().collect(Collectors.groupingBy(SimpleOrder::getType, Collectors.counting())));

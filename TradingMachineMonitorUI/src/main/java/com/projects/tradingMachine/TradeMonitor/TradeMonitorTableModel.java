@@ -72,7 +72,7 @@ public final class TradeMonitorTableModel extends AbstractTableModel {
                 value = order.getStop();
                 break;
             case 9:
-                value = order.getFillDate();
+                value = order.getStoreDate();
                 break;
         }
 
@@ -84,7 +84,7 @@ public final class TradeMonitorTableModel extends AbstractTableModel {
     	final Object valueAt = getValueAt(0, c);
     	if (valueAt == null && (c == 7 || c == 8))
     		return Double.class;
-		return valueAt.getClass();
+    	return valueAt.getClass();
     }
     
     public List<SimpleOrder> getOrders() {

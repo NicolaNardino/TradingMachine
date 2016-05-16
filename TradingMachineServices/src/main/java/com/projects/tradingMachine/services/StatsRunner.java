@@ -37,7 +37,7 @@ public final class StatsRunner implements Runnable {
 	public StatsRunner(final Properties properties) {
 		this.properties = properties;
 		mongoDBManager = new MongoDBManager(new MongoDBConnection(new DatabaseProperties(properties.getProperty("mongoDB.host"), 
-				Integer.valueOf(properties.getProperty("mongoDB.port")), properties.getProperty("mongoDB.database"))), properties.getProperty("mongoDB.filledOrdersCollection"));
+				Integer.valueOf(properties.getProperty("mongoDB.port")), properties.getProperty("mongoDB.database"))), properties.getProperty("mongoDB.executedOrdersCollection"));
 	}
 	
 	@Override
@@ -100,11 +100,11 @@ public final class StatsRunner implements Runnable {
 			switch(ot.getKey()) {
 				case BUY: 
 					sb.append("BUY orders number: ").append(String.valueOf(ot.getValue().size())).append("\n");
-					sb.append("Top "+topOrdersLimit+" biggest quantity BUY orders: \n\t").append(ot.getValue().stream().sorted(ordersQuantityComparator.reversed()).limit(topOrdersLimit).map(so -> so.getSymbol()+"/ "+so.getQuantity()+"/ "+so.getFillDate()).collect(Collectors.joining("\n\t"))).append("\n\n");
+					sb.append("Top "+topOrdersLimit+" biggest quantity BUY orders: \n\t").append(ot.getValue().stream().sorted(ordersQuantityComparator.reversed()).limit(topOrdersLimit).map(so -> so.getSymbol()+"/ "+so.getQuantity()+"/ "+so.getStoreDate()).collect(Collectors.joining("\n\t"))).append("\n\n");
 					break;
 				case SELL: 
 					sb.append("SELL orders number: ").append(String.valueOf(ot.getValue().size())).append("\n");
-					sb.append("Top "+topOrdersLimit+" smallest quantity SELL orders: \n\t").append(ot.getValue().stream().sorted(ordersQuantityComparator).limit(topOrdersLimit).map(so -> so.getSymbol()+"/ "+so.getQuantity()+"/ "+so.getFillDate()).collect(Collectors.joining("\n\t"))).append("\n\n");
+					sb.append("Top "+topOrdersLimit+" smallest quantity SELL orders: \n\t").append(ot.getValue().stream().sorted(ordersQuantityComparator).limit(topOrdersLimit).map(so -> so.getSymbol()+"/ "+so.getQuantity()+"/ "+so.getStoreDate()).collect(Collectors.joining("\n\t"))).append("\n\n");
 					break;
 			}
 		}

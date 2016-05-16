@@ -25,13 +25,15 @@ public final class RandomOrdersBuilder {
 		switch(randomOrderType) {
 			case LIMIT: order.setLimit(Utility.roundDouble(randomGenerator.nextDouble() * 100, 2)); break;
 			case STOP: order.setStop(Utility.roundDouble(randomGenerator.nextDouble() * 100, 2)); break;
-			default: break;
+		default:
+			throw new IllegalArgumentException("Not an expected order type: "+randomOrderType);
 		}
 		order.setType(randomOrderType);
 		order.setQuantity(randomGenerator.nextInt(1000) + 1);
 		order.setSymbol(randomListValue(allowedSymbols));
 		order.setTimeInForce(randomEnumValue(OrderTimeInForce.class));
-		order.SetFillDate(new Date());
+		order.SetStoreDate(new Date());
+		order.setRejected(false);
 		return order;
 	}
 	

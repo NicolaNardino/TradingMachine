@@ -58,7 +58,7 @@ public class TradingMachineFixInitiatorApplication implements Application, Messa
 	private final SessionSettings settings;
 	private final OrderManager orderManager;
 	private final TradingMachineMessageConsumer ordersConsumer;
-	private final TradingMachineMessageProducer filledOrdersProducer;
+	private final TradingMachineMessageProducer executedOrdersProducer;
 	private final Set<SessionID> loggedOnSessions;
 	
 	public TradingMachineFixInitiatorApplication(final SessionSettings settings) throws JMSException, FileNotFoundException, IOException {
@@ -66,10 +66,10 @@ public class TradingMachineFixInitiatorApplication implements Application, Messa
 		final Properties p = Utility.getApplicationProperties("tradingMachineOrderRouter.properties");
 		orderManager = new OrderManager();
 		loggedOnSessions = new HashSet<SessionID>();
-		ordersConsumer = new TradingMachineMessageConsumer(p.getProperty("activeMQ.url"), p.getProperty("activeMQ.ordersQueue"), DestinationType.Queue, this, "FixInitiatorApplication", this);
+		ordersConsumer = new TradingMachineMessageConsumer(p.getProperty("activeMQ.url"), p.getProperty("activeMQ.ordersQueue"), DestinationType.Queue, this, "FixInitiatorApplication", null, this);
 		ordersConsumer.start();
-		filledOrdersProducer = new TradingMachineMessageProducer(p.getProperty("activeMQ.url"), p.getProperty("activeMQ.filledOrdersTopic"), DestinationType.Topic, "FixInitiatorApplication", null);
-		filledOrdersProducer.start();
+		executedOrdersProducer = new TradingMachineMessageProducer(p.getProperty("activeMQ.url"), p.getProperty("activeMQ.executedOrdersTopic"), DestinationType.Topic, "FixInitiatorApplication", null);
+		executedOrdersProducer.start();
 	}
 	
 	@Override
@@ -182,6 +182,9 @@ public class TradingMachineFixInitiatorApplication implements Application, Messa
         case OrdStatus.REJECTED: 
         	order.setRejected(true);
         	order.setOpen(0);
+        	final ObjectMessage m = executedOrdersProducer.getSession().createObjectMessage(order);
+        	m.setStringProperty("Status", "REJECTED");
+        	executedOrdersProducer.getProducer().send(m);
         	break;
         case OrdStatus.CANCELED:
         case OrdStatus.DONE_FOR_DAY:
@@ -194,7 +197,9 @@ public class TradingMachineFixInitiatorApplication implements Application, Messa
         	break;
         case OrdStatus.FILLED:
         	order.setMarketDataId(Integer.valueOf(message.getField(new Text()).getValue()));
-        	filledOrdersProducer.getProducer().send(filledOrdersProducer.getSession().createObjectMessage(order));
+        	final ObjectMessage m1 = executedOrdersProducer.getSession().createObjectMessage(order);
+        	m1.setStringProperty("Status", "FILLED");
+        	executedOrdersProducer.getProducer().send(m1);
         	break;
         }
         orderManager.updateOrder(order);

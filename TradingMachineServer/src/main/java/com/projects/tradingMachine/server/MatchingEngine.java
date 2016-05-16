@@ -26,6 +26,7 @@ import quickfix.field.Price;
 import quickfix.field.Side;
 import quickfix.field.StopPx;
 import quickfix.field.Symbol;
+import quickfix.field.Text;
 import quickfix.field.TimeInForce;
 
 /**
@@ -66,6 +67,7 @@ public final class MatchingEngine implements Runnable {
                 executionReport.set(order.getClOrdID());
                 executionReport.set(order.getSymbol());
                 executionReport.set(order.getOrderQty());
+                executionReport.set(new Text(String.valueOf(priceQuantity.getMarketDataId())));
                 executionReport.set(new LastQty(priceQuantity.getQuantity()));
                 executionReport.set(new LastPx(priceQuantity.getPrice()));
                 executionReport.set(new AvgPx(priceQuantity.getPrice()));
@@ -96,7 +98,7 @@ public final class MatchingEngine implements Runnable {
         		if (((limitOrderSide == Side.BUY && Double.compare(marketPriceQuantity.getPrice(), limitPrice) <= 0)
                         || (limitOrderSide == Side.SELL && Double.compare(marketPriceQuantity.getPrice(), limitPrice) >= 0)) && (orderQuantity >= marketPriceQuantity.getQuantity())) {
         			log.info("Found filling price/ quantity for limit order, market price: "+marketPriceQuantity.getPrice()+", limit price: "+limitPrice+", quantity: "+orderQuantity);
-        			return new PriceQuantity(marketPriceQuantity.getPrice(), order.getOrderQty().getValue());
+        			return new PriceQuantity(marketPriceQuantity.getPrice(), orderQuantity, marketPriceQuantity.getMarketDataId());
         		}
         		else {
         			if (order.getChar(TimeInForce.FIELD) == TimeInForce.FILL_OR_KILL)
@@ -116,7 +118,7 @@ public final class MatchingEngine implements Runnable {
         		if (((stopOrderSide == Side.BUY && Double.compare(marketPriceQuantity.getPrice(), stopPrice) > 0)
                         || (stopOrderSide == Side.SELL && Double.compare(marketPriceQuantity.getPrice(), stopPrice) < 0)) &&  (orderQuantity >= marketPriceQuantity.getQuantity())) {
         			log.info("Found filling price for stop order, market price: "+marketPriceQuantity.getPrice()+", stop price: "+stopPrice);
-        			return new PriceQuantity(marketPriceQuantity.getPrice(), order.getOrderQty().getValue());
+        			return new PriceQuantity(marketPriceQuantity.getPrice(), orderQuantity, marketPriceQuantity.getMarketDataId());
         		}
         		else {
         			log.debug("Looping to find filling price for stop order, market price: "+marketPriceQuantity.getPrice()+", stop price: "+stopPrice);
@@ -129,34 +131,42 @@ public final class MatchingEngine implements Runnable {
         		final PriceQuantity marketPriceQuantity = getMarketPriceQuantity(order);
         		if (marketPriceQuantity.getQuantity() < orderQuantity && order.getChar(TimeInForce.FIELD) == TimeInForce.FILL_OR_KILL)
             		return null;	
-            	return new PriceQuantity(marketPriceQuantity.getPrice(), orderQuantity);
+            	return new PriceQuantity(marketPriceQuantity.getPrice(), orderQuantity, marketPriceQuantity.getMarketDataId());
 		}
     }
 	
 	private static class PriceQuantity {
 		private final double price;
 		private final double quantity;
+		private final int marketDataId;
 		
-		public PriceQuantity(final double price, final double quantity) {
+		public PriceQuantity(final double price, final double quantity, final int marketDataId) {
 			this.price = price;
 			this.quantity = quantity;
+			this.marketDataId = marketDataId;
 		}
 		
 		public double getPrice() {
 			return price;
 		}
+		
 		public double getQuantity() {
 			return quantity;
 		}
+		
+		public int getMarketDataId() {
+			return marketDataId;
+		}
+		
 	}
 	
 	private PriceQuantity getMarketPriceQuantity(final Message message) throws FieldNotFound {
-		final MarketData marketDataPrice = marketDataManager.get(message.getString(Symbol.FIELD));
+		final MarketData marketData = marketDataManager.get(message.getString(Symbol.FIELD));
 		switch (message.getChar(Side.FIELD)) {
 			case Side.BUY:
-				return new PriceQuantity(marketDataPrice.getAsk(), marketDataPrice.getAskSize());
+				return new PriceQuantity(marketData.getAsk(), marketData.getAskSize(), marketData.getID());
 			case Side.SELL:
-				return new PriceQuantity(marketDataPrice.getBid(), marketDataPrice.getBidSize());
+				return new PriceQuantity(marketData.getBid(), marketData.getBidSize(), marketData.getID());
 			default:
 				throw new RuntimeException("Invalid order side: " + message.getChar(Side.FIELD));
 		}

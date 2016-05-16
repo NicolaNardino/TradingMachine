@@ -96,7 +96,8 @@ public final class MongoDBManager implements DataManager {
 	}
 	
 	private static Document ConvertMarketDataToBSONDocument(final MarketData marketData) {
-		return new Document("Symbol", marketData.getSymbol())
+		return new Document("ID", marketData.getID()).
+				append("Symbol", marketData.getSymbol())
 		        .append("Ask", marketData.getAsk())
 		        .append("Bid",marketData.getBid())
 		        .append("AskSize", marketData.getAskSize())

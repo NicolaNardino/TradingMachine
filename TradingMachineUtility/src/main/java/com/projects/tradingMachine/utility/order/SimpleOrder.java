@@ -8,6 +8,7 @@ import quickfix.SessionID;
 public class SimpleOrder implements Serializable {
 
 	private static final long serialVersionUID = 1L;
+	private static int nextID = 1;
 	private SessionID sessionID = null;
     private String symbol = null;
     private int quantity = 0;
@@ -25,9 +26,9 @@ public class SimpleOrder implements Serializable {
     private String message = null;
     private String ID = null;
     private String originalID = null;
-    private static int nextID = 1;
     
     private Date fillDate;
+    private int marketDataID;
     
     public SimpleOrder() {
         ID = Long.valueOf(System.currentTimeMillis() + (nextID++)).toString();
@@ -215,6 +216,14 @@ public class SimpleOrder implements Serializable {
     	this.fillDate = fillDate;
     }
     
+	public int getMarketDataID() {
+		return marketDataID;
+	}
+
+	public void setMarketDataId(int marketDataID) {
+		this.marketDataID = marketDataID;
+	}
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;

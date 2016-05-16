@@ -2,6 +2,9 @@ package com.projects.tradingMachine.utility.marketData;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.stream.IntStream;
+
+import com.projects.tradingMachine.utility.Utility;
 
 public final class MarketData implements Serializable{
 
@@ -23,11 +26,9 @@ public final class MarketData implements Serializable{
 		quoteDateTime = new Date();
 	}
 
-
-	public static long getSerialversionuid() {
-		return serialVersionUID;
+	public int getID() {
+		return hashCode(); //the hashcode could be cached but, given the simplicity of this object, I don't deem it as necessary.
 	}
-
 
 	public String getSymbol() {
 		return symbol;
@@ -110,5 +111,9 @@ public final class MarketData implements Serializable{
 	public String toString() {
 		return "MarketData [symbol=" + symbol + ", bid=" + bid + ", ask=" + ask + ", bidSize=" + bidSize + ", askSize="
 				+ askSize + ", quoteTime=" + quoteDateTime + "]";
+	}
+	
+	public static void main(final String[] args) {
+		IntStream.range(1, 100).forEach(i -> System.out.println(Utility.buildRandomMarketDataItem("ABC").getID()));
 	}
 }

@@ -21,7 +21,7 @@ import quickfix.SocketAcceptor;
  * Main class for configuring and starting the FIX acceptor.
  * */
 public final class TradingMachineServer {
-	private final static Logger log = LoggerFactory.getLogger(TradingMachineServer.class);
+	private final static Logger logger = LoggerFactory.getLogger(TradingMachineServer.class);
 	private final SocketAcceptor acceptor;
 
 	public TradingMachineServer() throws Exception {
@@ -51,11 +51,11 @@ public final class TradingMachineServer {
 		try {
 			final TradingMachineServer executor = new TradingMachineServer();
 			executor.start();
-			System.out.println("press <enter> to quit");
+			logger.info("press <enter> to quit");
 			System.in.read();
 			executor.stop();
-		} catch (Exception e) {
-			log.error(e.getMessage(), e);
+		} catch (final Exception e) {
+			logger.error(e.getMessage(), e);
 		}
 	}
 }

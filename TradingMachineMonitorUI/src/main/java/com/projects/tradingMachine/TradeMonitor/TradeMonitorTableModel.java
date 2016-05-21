@@ -42,6 +42,8 @@ public final class TradeMonitorTableModel extends AbstractTableModel {
     @Override
     public Object getValueAt(final int rowId, final int colId) {
     	Object value = null;
+    	if (orders.size() == 0)
+    		return null;
         final SimpleOrder order = orders.get(rowId);
         switch (colId) {
             case 0:
@@ -82,7 +84,8 @@ public final class TradeMonitorTableModel extends AbstractTableModel {
     @Override
     public Class<?> getColumnClass(final int c) {
     	final Object valueAt = getValueAt(0, c);
-    	if (valueAt == null && (c == 7 || c == 8))
+    	//if (valueAt == null && (c == 7 || c == 8))
+    	if (valueAt == null)
     		return Double.class;
     	return valueAt.getClass();
     }

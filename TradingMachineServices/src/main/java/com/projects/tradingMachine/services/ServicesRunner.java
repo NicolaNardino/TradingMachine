@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.jms.JMSException;
 
-import com.projects.tradingMachine.services.database.FilledOrdersBackEndStore;
+import com.projects.tradingMachine.services.database.OrdersBackEndStore;
 import com.projects.tradingMachine.services.simulation.marketData.MarketDataProducer;
 import com.projects.tradingMachine.services.simulation.orders.OrdersProducer;
 import com.projects.tradingMachine.utility.ServiceLifeCycle;
@@ -30,7 +30,7 @@ import com.projects.tradingMachine.utility.Utility;
 public final class ServicesRunner implements ServiceLifeCycle {
 
 	private final ExecutorService es;
-	private final FilledOrdersBackEndStore filledOrdersBackEndStore;
+	private final OrdersBackEndStore filledOrdersBackEndStore;
 	private final Properties properties;
 	private Future<?> ordersProducerFuture;
 	private Future<?> marketDataProducerFuture;
@@ -42,7 +42,7 @@ public final class ServicesRunner implements ServiceLifeCycle {
 	public ServicesRunner(final Properties properties) throws ClassNotFoundException, JMSException, SQLException, FileNotFoundException, IOException {
 		this.properties = properties;
 		es = Executors.newFixedThreadPool(3);
-		filledOrdersBackEndStore = new FilledOrdersBackEndStore(properties);
+		filledOrdersBackEndStore = new OrdersBackEndStore(properties);
 	}
 	
 	/**

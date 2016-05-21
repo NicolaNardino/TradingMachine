@@ -73,7 +73,7 @@ public class MySqlManager implements DataManager {
 			while (rs.next())
 				result.add(new SimpleOrder(rs.getString("ID"), rs.getString("symbol"), rs.getInt("quantity"), OrderSide.fromString(rs.getString("side")), 
 						OrderType.fromString(rs.getString("type")), OrderTimeInForce.fromString(rs.getString("time_in_force")), 
-						rs.getDouble("limit_price"), rs.getDouble("stop_price"), rs.getDouble("price"), rs.getString("original_id"), rs.getDate("fill_date"))); 
+						rs.getDouble("limit_price"), rs.getDouble("stop_price"), rs.getDouble("price"), rs.getString("original_id"), rs.getDate("fill_date"), false)); 
 		}
 		catch(final SQLException e) {
 			throw new RuntimeException(e);

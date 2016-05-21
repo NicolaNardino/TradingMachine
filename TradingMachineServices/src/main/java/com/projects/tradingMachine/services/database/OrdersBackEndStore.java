@@ -21,16 +21,16 @@ import com.projects.tradingMachine.utility.Utility;
 import com.projects.tradingMachine.utility.Utility.DestinationType;
 import com.projects.tradingMachine.utility.order.SimpleOrder;
 
-public final class FilledOrdersBackEndStore implements MessageListener, ServiceLifeCycle
+public final class OrdersBackEndStore implements MessageListener, ServiceLifeCycle
 {
-	private static Logger logger = LoggerFactory.getLogger(FilledOrdersBackEndStore.class);
+	private static Logger logger = LoggerFactory.getLogger(OrdersBackEndStore.class);
 	
-	private final TradingMachineMessageConsumer filledOrdersConsumer;
+	private final TradingMachineMessageConsumer ordersConsumer;
 	private final DataManager mongoDBManager;
 	private final DataManager mySqlManager; 
 	
-	public FilledOrdersBackEndStore(final Properties p) throws JMSException, ClassNotFoundException, SQLException {
-		filledOrdersConsumer = new TradingMachineMessageConsumer(p.getProperty("activeMQ.url"), p.getProperty("activeMQ.executedOrdersTopic"), DestinationType.Topic, this, "BackEnd", null, null);
+	public OrdersBackEndStore(final Properties p) throws JMSException, ClassNotFoundException, SQLException {
+		ordersConsumer = new TradingMachineMessageConsumer(p.getProperty("activeMQ.url"), p.getProperty("activeMQ.executedOrdersTopic"), DestinationType.Topic, this, "BackEnd", null, null);
 		mongoDBManager = new MongoDBManager(new MongoDBConnection(new DatabaseProperties(p.getProperty("mongoDB.host"), 
 				Integer.valueOf(p.getProperty("mongoDB.port")), p.getProperty("mongoDB.database"))), p.getProperty("mongoDB.executedOrdersCollection"));
 		mySqlManager = new MySqlManager(new MySqlConnection(new DatabaseProperties(p.getProperty("mySQL.host"), Integer.valueOf(p.getProperty("mySQL.port")), p.getProperty("mySQL.database"), 
@@ -39,12 +39,12 @@ public final class FilledOrdersBackEndStore implements MessageListener, ServiceL
 	
 	@Override
 	public void start() throws JMSException {
-		filledOrdersConsumer.start();
+		ordersConsumer.start();
 	}
 	
 	@Override
 	public void stop() throws Exception {
-		filledOrdersConsumer.stop();
+		ordersConsumer.stop();
 		mongoDBManager.close();
 		mySqlManager.close();
 	}
@@ -62,7 +62,7 @@ public final class FilledOrdersBackEndStore implements MessageListener, ServiceL
 	}
 	
 	public static void main(final String[] args) throws Exception {
-		FilledOrdersBackEndStore f = new FilledOrdersBackEndStore(Utility.getApplicationProperties("tradingMachineServices.properties"));
+		OrdersBackEndStore f = new OrdersBackEndStore(Utility.getApplicationProperties("tradingMachineServices.properties"));
 		f.start();
 		Thread.sleep(10000);
 		f.stop();

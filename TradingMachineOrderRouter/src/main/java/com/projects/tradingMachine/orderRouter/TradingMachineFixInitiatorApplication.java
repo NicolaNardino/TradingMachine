@@ -196,7 +196,7 @@ public class TradingMachineFixInitiatorApplication implements Application, Messa
         		order.setNew(false);
         	break;
         case OrdStatus.FILLED:
-        	order.setMarketDataId(Integer.valueOf(message.getField(new Text()).getValue()));
+        	order.setMarketDataId(message.getField(new Text()).getValue());
         	final ObjectMessage m1 = executedOrdersProducer.getSession().createObjectMessage(order);
         	m1.setStringProperty("Status", "FILLED");
         	executedOrdersProducer.getProducer().send(m1);

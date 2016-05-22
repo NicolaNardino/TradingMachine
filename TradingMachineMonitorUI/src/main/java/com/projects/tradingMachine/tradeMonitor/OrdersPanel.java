@@ -1,4 +1,4 @@
-package com.projects.tradingMachine.TradeMonitor;
+package com.projects.tradingMachine.tradeMonitor;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -8,7 +8,6 @@ import java.awt.GridLayout;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,33 +22,28 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-import javax.swing.RowSorter;
 import javax.swing.SortOrder;
-import javax.swing.border.Border;
 import javax.swing.border.EtchedBorder;
-import javax.swing.border.TitledBorder;
-import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableModel;
-import javax.swing.table.TableRowSorter;
 
+import com.projects.tradingMachine.tradeMonitor.util.DatetimeTableCellRenderer;
+import com.projects.tradingMachine.tradeMonitor.util.SwingUtility;
 import com.projects.tradingMachine.utility.Utility;
 import com.projects.tradingMachine.utility.order.OrderSide;
 import com.projects.tradingMachine.utility.order.OrderType;
 import com.projects.tradingMachine.utility.order.SimpleOrder;
 
 /**
- * It creates a panel with a table as main content and:  
+ * It creates a panel with a executed and rejected orders tables and:  
  * 	<ul>
  * 		<li>Sets a column renderer on the FilledDate column.</li>
  * 		<li>Overrides JTable.prepareRenderer in order to show BUY and SELL order rows with different colors.</li>
  * 		<li>Sets a TableRowSorter with default sorting enabled on the FilledDate column.</li>
- * 		<li>As a side content, North to the table, it shows statistics about the orders which get updated every 1 second.</li>
+ * 		<li>As a side content, North to the tables, it shows statistics about the orders, which get updated every 1 second.</li>
  * 	</ul>
  * */
-public final class TradeMonitorTablePanel extends JPanel {
+public final class OrdersPanel extends JPanel {
 	private static final long serialVersionUID = 1L;
-	private static final SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 	private final List<SimpleOrder> filledOrders;
 	private final List<SimpleOrder> rejectedOrders;
 	private JTable filledOrdersTable;
@@ -57,7 +51,7 @@ public final class TradeMonitorTablePanel extends JPanel {
 	private final  Map<StatsLabel, JLabel> statLabels = new HashMap<>();
 	private final ScheduledExecutorService es = Executors.newScheduledThreadPool(1);
 	
-	public TradeMonitorTablePanel(final List<SimpleOrder> filledOrders, final List<SimpleOrder> rejectedOrders) throws FileNotFoundException, IOException, JMSException {
+	public OrdersPanel(final List<SimpleOrder> filledOrders, final List<SimpleOrder> rejectedOrders) throws FileNotFoundException, IOException, JMSException {
         super(new BorderLayout(10, 20)); 
         this.filledOrders = filledOrders;
         this.rejectedOrders = rejectedOrders;
@@ -90,7 +84,7 @@ public final class TradeMonitorTablePanel extends JPanel {
     }
 	
 	private static JTable buildOrdersTable(final List<SimpleOrder> orders) throws FileNotFoundException, IOException, JMSException {
-		final JTable ordersTable = new JTable(new TradeMonitorTableModel(orders)) {
+		final JTable ordersTable = new JTable(new OrdersTableModel(orders)) {
 			private static final long serialVersionUID = 1L;
         	public Component prepareRenderer(final TableCellRenderer renderer, final int row, final int column)
         	    {
@@ -110,25 +104,15 @@ public final class TradeMonitorTablePanel extends JPanel {
         	        return component;
         	    }
         };
-        ordersTable.getColumnModel().getColumn(9).setCellRenderer(new DefaultTableCellRenderer() {
-			private static final long serialVersionUID = 1L;
-            public Component getTableCellRendererComponent(final JTable table, Object value, final boolean isSelected, final boolean hasFocus,
-                    final int row, final int column) {
-                value = dateFormat.format(value);
-                return super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-            }
-        });
+        ordersTable.getColumnModel().getColumn(9).setCellRenderer(new DatetimeTableCellRenderer(new SimpleDateFormat("dd/MM/yyyy HH:mm:ss")));
         //pre-set sorter enabled on the FilledDate column.
-        final TableRowSorter<TableModel> tableSorter = new TableRowSorter<TableModel>(ordersTable.getModel());
-        ordersTable.setRowSorter(tableSorter);
-        final List<RowSorter.SortKey> sortKeys = new ArrayList<>();
-        sortKeys.add(new RowSorter.SortKey(9, SortOrder.DESCENDING));
-        tableSorter.setSortKeys(sortKeys);
-        tableSorter.sort();
+        SwingUtility.setTableSorter(ordersTable, 9, SortOrder.DESCENDING);
         ordersTable.setPreferredScrollableViewportSize(new Dimension(500, 70));
         ordersTable.setFillsViewportHeight(true);
         return ordersTable;
 	}
+	
+	
 	
 	private JPanel buildStatsPanel() {
 		final JPanel panel = new JPanel(new GridLayout(1, 8, 10, 5));

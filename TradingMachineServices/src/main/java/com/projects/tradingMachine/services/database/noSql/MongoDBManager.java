@@ -66,7 +66,7 @@ public final class MongoDBManager implements DataManager {
 	}
 	
 	@Override
-	public void addMarketDataItems(final List<MarketData> marketDataItems, final boolean deleteFirst) {
+	public void storeMarketDataItems(final List<MarketData> marketDataItems, final boolean deleteFirst) {
 		logger.debug("Starting to store "+ marketDataItems.size()+" MarketData items...");
 		if (deleteFirst) 
 			marketDataCollection.deleteMany(new Document());
@@ -74,6 +74,24 @@ public final class MongoDBManager implements DataManager {
 		marketDataItems.forEach(marketDataItem -> docs.add(ConvertMarketDataToBSONDocument(marketDataItem)));
 		marketDataCollection.insertMany(docs);
 		logger.debug("Data stored successfully");
+	}
+	
+	@Override
+	public List<MarketData> getMarketData(final Optional<String> symbol) {
+		long startTime = System.currentTimeMillis();
+		final List<MarketData> result = new ArrayList<MarketData>();
+		final MongoCursor<Document> cursor = symbol.isPresent() ? marketDataCollection.find(new Document("Symbol", symbol.get())).iterator() : marketDataCollection.find().iterator();
+		try {
+		    while (cursor.hasNext()) {
+		    	final Document doc = cursor.next();
+				result.add(new MarketData(doc.getString("ID"), doc.getString("Symbol"), doc.getDouble("Ask"), 
+		    			doc.getDouble("Bid"), doc.getInteger("AskSize"), doc.getInteger("BidSize"), doc.getDate("QuoteTime")));
+		    }
+		} finally {
+		    cursor.close();
+		}
+		logger.info("Time taken to retrieve orders: "+(startTime - System.currentTimeMillis())+" ms.");
+		return result;
 	}
 
 	@Override

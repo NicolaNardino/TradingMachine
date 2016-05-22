@@ -1,4 +1,4 @@
-package com.projects.tradingMachine.TradeMonitor;
+package com.projects.tradingMachine.tradeMonitor;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -11,15 +11,15 @@ import com.projects.tradingMachine.utility.order.SimpleOrder;
 
 /**
  * Custom table model with the initial data set coming from the orders stored in a MongoDB collection, then incremented with the ones received onto the 
- * FilledOrdersTopic. 
+ * ExecutedOrdersTopic. 
  * */
-public final class TradeMonitorTableModel extends AbstractTableModel {
+public final class OrdersTableModel extends AbstractTableModel {
 	private static final long serialVersionUID = 1L;
 	private final String[] columnNames = {"ID", "Symbol", "Quantity", "Side", "Type", "Time in Force", "Fill Price", "Limit Price", "Stop Price", "Fill Date"};
     
     private final List<SimpleOrder> orders;
     
-    public TradeMonitorTableModel(final List<SimpleOrder> orders) throws FileNotFoundException, IOException, JMSException {
+    public OrdersTableModel(final List<SimpleOrder> orders) throws FileNotFoundException, IOException, JMSException {
     	super();
     	this.orders = orders;
     }
@@ -84,8 +84,7 @@ public final class TradeMonitorTableModel extends AbstractTableModel {
     @Override
     public Class<?> getColumnClass(final int c) {
     	final Object valueAt = getValueAt(0, c);
-    	//if (valueAt == null && (c == 7 || c == 8))
-    	if (valueAt == null)
+    	if (valueAt == null /*&& (c == 7 || c == 8)*/)
     		return Double.class;
     	return valueAt.getClass();
     }

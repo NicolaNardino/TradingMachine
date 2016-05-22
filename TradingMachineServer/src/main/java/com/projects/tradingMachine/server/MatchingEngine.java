@@ -138,9 +138,9 @@ public final class MatchingEngine implements Runnable {
 	private static class PriceQuantity {
 		private final double price;
 		private final double quantity;
-		private final int marketDataId;
+		private final String marketDataId;
 		
-		public PriceQuantity(final double price, final double quantity, final int marketDataId) {
+		public PriceQuantity(final double price, final double quantity, final String marketDataId) {
 			this.price = price;
 			this.quantity = quantity;
 			this.marketDataId = marketDataId;
@@ -154,7 +154,7 @@ public final class MatchingEngine implements Runnable {
 			return quantity;
 		}
 		
-		public int getMarketDataId() {
+		public String getMarketDataId() {
 			return marketDataId;
 		}
 		

@@ -28,7 +28,7 @@ public class SimpleOrder implements Serializable {
     private String originalID = null;
     
     private Date storeDate;
-    private int marketDataID;
+    private String marketDataID;
     
     public SimpleOrder() {
         ID = Long.valueOf(System.currentTimeMillis() + (nextID++)).toString();
@@ -218,11 +218,11 @@ public class SimpleOrder implements Serializable {
     	this.storeDate = storeDate;
     }
     
-	public int getMarketDataID() {
+	public String getMarketDataID() {
 		return marketDataID;
 	}
 
-	public void setMarketDataId(int marketDataID) {
+	public void setMarketDataId(final String marketDataID) {
 		this.marketDataID = marketDataID;
 	}
 

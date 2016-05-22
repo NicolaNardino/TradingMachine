@@ -83,7 +83,12 @@ public class MySqlManager implements DataManager {
 	}
 	
 	@Override
-	public void addMarketDataItems(final List<MarketData> marketDataItems, final boolean deleteFirst) {
+	public void storeMarketDataItems(final List<MarketData> marketDataItems, final boolean deleteFirst) {
+		throw new UnsupportedOperationException("Not implemented yet.");
+	}
+	
+	@Override
+	public List<MarketData> getMarketData(Optional<String> symbol) {
 		throw new UnsupportedOperationException("Not implemented yet.");
 	}
 	

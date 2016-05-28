@@ -71,9 +71,9 @@ public class MySqlManager implements DataManager {
 				stm.setNull(1, java.sql.Types.VARCHAR);
 			final ResultSet rs = stm.executeQuery();
 			while (rs.next())
-				result.add(new SimpleOrder(rs.getString("ID"), rs.getString("symbol"), rs.getInt("quantity"), OrderSide.fromString(rs.getString("side")), 
+				result.add(new SimpleOrder(rs.getString("id"), rs.getString("symbol"), rs.getInt("quantity"), OrderSide.fromString(rs.getString("side")), 
 						OrderType.fromString(rs.getString("type")), OrderTimeInForce.fromString(rs.getString("time_in_force")), 
-						rs.getDouble("limit_price"), rs.getDouble("stop_price"), rs.getDouble("price"), rs.getString("original_id"), rs.getDate("fill_date"), false)); 
+						rs.getDouble("limit_price"), rs.getDouble("stop_price"), rs.getDouble("price"), rs.getString("original_id"), rs.getDate("fill_date"), false, rs.getString("market_data_id"))); 
 		}
 		catch(final SQLException e) {
 			throw new RuntimeException(e);

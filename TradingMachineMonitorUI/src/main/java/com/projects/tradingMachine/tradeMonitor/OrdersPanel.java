@@ -55,8 +55,8 @@ public final class OrdersPanel extends JPanel {
         super(new BorderLayout(10, 20)); 
         this.filledOrders = filledOrders;
         this.rejectedOrders = rejectedOrders;
-        filledOrdersTable = buildOrdersTable(filledOrders);
-        rejectedOrdersTable = buildOrdersTable(rejectedOrders);
+        filledOrdersTable = buildOrdersTable(filledOrders, true);
+        rejectedOrdersTable = buildOrdersTable(rejectedOrders, false);
         add(buildStatsPanel(), BorderLayout.NORTH);
         final JScrollPane filledOrdersScrollPane = new JScrollPane(filledOrdersTable);
         filledOrdersScrollPane.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(EtchedBorder.LOWERED), "Filled Orders"));
@@ -83,8 +83,8 @@ public final class OrdersPanel extends JPanel {
         }, 1, 1, TimeUnit.SECONDS); 
     }
 	
-	private static JTable buildOrdersTable(final List<SimpleOrder> orders) throws FileNotFoundException, IOException, JMSException {
-		final JTable ordersTable = new JTable(new OrdersTableModel(orders)) {
+	private static JTable buildOrdersTable(final List<SimpleOrder> orders, boolean filled) throws FileNotFoundException, IOException, JMSException {
+		final JTable ordersTable = new JTable(filled ? new FilledOrdersTableModel(orders) : new RejectedOrdersTableModel(orders)) {
 			private static final long serialVersionUID = 1L;
         	public Component prepareRenderer(final TableCellRenderer renderer, final int row, final int column)
         	    {
@@ -104,15 +104,13 @@ public final class OrdersPanel extends JPanel {
         	        return component;
         	    }
         };
-        ordersTable.getColumnModel().getColumn(9).setCellRenderer(new DatetimeTableCellRenderer(new SimpleDateFormat("dd/MM/yyyy HH:mm:ss")));
+        ordersTable.getColumnModel().getColumn(filled ? 9 : 8).setCellRenderer(new DatetimeTableCellRenderer(new SimpleDateFormat("dd/MM/yyyy HH:mm:ss")));
         //pre-set sorter enabled on the FilledDate column.
-        SwingUtility.setTableSorter(ordersTable, 9, SortOrder.DESCENDING);
+        SwingUtility.setTableSorter(ordersTable, filled ? 9 : 8, SortOrder.DESCENDING);
         ordersTable.setPreferredScrollableViewportSize(new Dimension(500, 70));
         ordersTable.setFillsViewportHeight(true);
         return ordersTable;
 	}
-	
-	
 	
 	private JPanel buildStatsPanel() {
 		final JPanel panel = new JPanel(new GridLayout(1, 8, 10, 5));

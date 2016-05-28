@@ -56,7 +56,8 @@ public final class MongoDBManager implements DataManager {
 		    	final Document doc = cursor.next();
 		    	result.add(new SimpleOrder(doc.getString("ID"), doc.getString("Symbol"), doc.getInteger("Quantity"), 
 		    		 OrderSide.fromString(doc.getString("Side")), OrderType.fromString(doc.getString("Type")), OrderTimeInForce.fromString(doc.getString("TimeInForce")), 
-		    		 doc.getDouble("LimitPrice"), doc.getDouble("StopPrice"), doc.getDouble("Price"), doc.getString("OriginalID"), doc.getDate("StoreDate"), doc.getBoolean("IsRejected")));
+		    		 doc.getDouble("LimitPrice"), doc.getDouble("StopPrice"), doc.getDouble("Price"), doc.getString("OriginalID"), doc.getDate("StoreDate"), 
+		    		 doc.getBoolean("IsRejected"), doc.getString("MarketDataID")));
 		    }
 		} finally {
 		    cursor.close();
@@ -111,7 +112,8 @@ public final class MongoDBManager implements DataManager {
 		        .append("Price", order.getAvgPx())
 		        .append("OriginalID", order.getOriginalID())
 				.append("StoreDate", new Date())
-				.append("IsRejected", order.isRejected());
+				.append("IsRejected", order.isRejected())
+				.append("MarketDataID", order.getMarketDataID());
 	}
 	
 	private static Document ConvertMarketDataToBSONDocument(final MarketData marketData) {

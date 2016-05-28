@@ -39,7 +39,7 @@ public class SimpleOrder implements Serializable {
      * */
     public SimpleOrder(final String ID, final String symbol, final int quantity, final OrderSide side, final OrderType type, 
     		final OrderTimeInForce timeInForce, final Double limitPrice, final Double stopPrice, final Double price, final String originalID, 
-    		final Date storeDate, final boolean rejected) {
+    		final Date storeDate, final boolean rejected, final String marketDataID) {
     	this.ID = ID;
     	this.symbol = symbol;
     	this.quantity = quantity;
@@ -52,6 +52,7 @@ public class SimpleOrder implements Serializable {
     	this.originalID = originalID;
     	this.storeDate = storeDate;
     	this.rejected = rejected;
+    	this.marketDataID = marketDataID;
     }
     
     public SimpleOrder(final String ID) {

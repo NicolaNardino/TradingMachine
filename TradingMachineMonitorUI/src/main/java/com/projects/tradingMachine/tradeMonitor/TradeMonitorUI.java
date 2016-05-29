@@ -54,7 +54,7 @@ public final class TradeMonitorUI implements MessageListener {
 	private final List<MarketData> marketDataItems;
 	private final OrdersPanel ordersPanel;
 	private final MarketDataPanel marketDataPanel;
-	private static final boolean isWithoutLiveFeed = false;
+	private static final boolean isWithoutLiveFeed = true;
 	
 	public TradeMonitorUI(final Properties p) throws JMSException, FileNotFoundException, IOException {
 		mongoDBManager = new MongoDBManager(new MongoDBConnection(new DatabaseProperties(p.getProperty("mongoDB.host"), 
@@ -68,6 +68,7 @@ public final class TradeMonitorUI implements MessageListener {
 		filledOrders = backEndOrders.stream().filter(o -> !o.isRejected()).sorted(dateComparator.reversed()).collect(Collectors.toList());//sorting isn't strictly needed because it'd have been done by the table sorter.
 		rejectedOrders = backEndOrders.stream().filter(o -> o.isRejected()).sorted(dateComparator.reversed()).collect(Collectors.toList());
 		ordersPanel = new OrdersPanel(filledOrders, rejectedOrders);
+		//ordersPanel.getFilledOrdersTable().getColumnModel().getColumn(10).setCellRenderer(new TooltipCellRenderer(marketDataItems));
 		marketDataPanel = new MarketDataPanel(marketDataItems);
 		executedOrdersConsumer.start();
 		marketDataConsumer.start();
@@ -103,6 +104,7 @@ public final class TradeMonitorUI implements MessageListener {
 				}
             	try {
             		ordersPanel.cleanUp();
+            		marketDataPanel.cleanUp();
 				} catch (final Exception e1) {
 					logger.warn("Unable to clean up OrdersPanel resources.\n"+e1.getMessage());
 				}

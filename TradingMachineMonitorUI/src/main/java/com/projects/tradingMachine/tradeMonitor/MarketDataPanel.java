@@ -7,36 +7,80 @@ import java.awt.Dimension;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import javax.jms.JMSException;
+import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.SortOrder;
+import javax.swing.border.EtchedBorder;
+import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
 
 import com.projects.tradingMachine.tradeMonitor.util.DatetimeTableCellRenderer;
+import com.projects.tradingMachine.tradeMonitor.util.MarketDataSummary;
+import com.projects.tradingMachine.tradeMonitor.util.PanelCleanUp;
 import com.projects.tradingMachine.tradeMonitor.util.SwingUtility;
+import com.projects.tradingMachine.utility.Utility;
 import com.projects.tradingMachine.utility.marketData.MarketData;
 
 /**
  * Market data panel with a table as main content.
  * */
-public final class MarketDataPanel extends JPanel {
+public final class MarketDataPanel extends JPanel implements PanelCleanUp {
 	private static final long serialVersionUID = 1L;
 	private final List<MarketData> marketDataItems;
+	private List<MarketDataSummary> marketDataSummaryItems;
 	private final JTable marketDataTable;
+	private final JTable marketDataSummaryTable;
+	private final ScheduledExecutorService es = Executors.newScheduledThreadPool(1);
 
-	public MarketDataPanel(List<MarketData> marketDataItems) throws FileNotFoundException, IOException, JMSException {
+	public MarketDataPanel(final List<MarketData> marketDataItems) throws FileNotFoundException, IOException, JMSException {
 		super(new BorderLayout(10, 20)); 
 		this.marketDataItems = marketDataItems;
-		marketDataTable = buildMarketDataTable();
-		add(new JScrollPane(marketDataTable), BorderLayout.CENTER);
+		marketDataSummaryItems = buildMarketDataSummary();
+		marketDataTable = buildMarketDataTable(false);
+		marketDataSummaryTable = buildMarketDataTable(true);
+		final JScrollPane marketDataSummaryScrollPanel = new JScrollPane(marketDataSummaryTable);
+		marketDataSummaryScrollPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(EtchedBorder.LOWERED), "Market Data Summary"));
+		add(marketDataSummaryScrollPanel, BorderLayout.NORTH);
+		final JScrollPane marketDataScrollPanel = new JScrollPane(marketDataTable);
+		marketDataScrollPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(EtchedBorder.LOWERED), "Market Data"));
+		add(marketDataScrollPanel, BorderLayout.CENTER);
+		es.scheduleWithFixedDelay(() -> {
+			marketDataSummaryItems = buildMarketDataSummary();
+			((AbstractTableModel)marketDataSummaryTable.getModel()).fireTableDataChanged();  
+        }, 2, 1, TimeUnit.SECONDS); 
+	}
+	
+	private List<MarketDataSummary> buildMarketDataSummary() {
+		final List<MarketDataSummary> summary = new LinkedList<>();
+		final Map<String, Long> itemsNumber = marketDataItems.parallelStream().
+				collect(Collectors.groupingBy(MarketData::getSymbol, Collectors.counting()));
+		final Map<String, Double> avgBid = marketDataItems.parallelStream().
+				collect(Collectors.groupingBy(MarketData::getSymbol, Collectors.averagingDouble(MarketData::getBid)));
+		final Map<String, Double> avgAsk = marketDataItems.parallelStream().
+				collect(Collectors.groupingBy(MarketData::getSymbol, Collectors.averagingDouble(MarketData::getAsk)));
+		final Map<String, Double> avgBidSize = marketDataItems.parallelStream().
+				collect(Collectors.groupingBy(MarketData::getSymbol, Collectors.averagingDouble(MarketData::getBidSize)));
+		final Map<String, Double> avgAskSize = marketDataItems.parallelStream().
+				collect(Collectors.groupingBy(MarketData::getSymbol, Collectors.averagingDouble(MarketData::getAskSize)));
+		for(final Entry<String, Long> entry : itemsNumber.entrySet()) 
+			 summary.add(new MarketDataSummary(entry.getKey(), avgBid.get(entry.getKey()), avgAsk.get(entry.getKey()), avgBidSize.get(entry.getKey()), avgAskSize.get(entry.getKey()), entry.getValue()));
+		return summary;
 	}
 
-	private JTable buildMarketDataTable() throws FileNotFoundException, IOException, JMSException {
-		final JTable marketDataTable = new JTable(new MarketDataTableModel(marketDataItems)) {
+	private JTable buildMarketDataTable(boolean isSummaryTable) throws FileNotFoundException, IOException, JMSException {
+		final JTable marketDataTable = new JTable(isSummaryTable ? new MarketDataSummaryTableModel(marketDataSummaryItems) : new MarketDataTableModel(marketDataItems)) {
 			private static final long serialVersionUID = 1L;
 			public Component prepareRenderer(final TableCellRenderer renderer, final int row, final int column)
 			{
@@ -52,9 +96,12 @@ public final class MarketDataPanel extends JPanel {
 				return component;
 			}
 		};
-		marketDataTable.getColumnModel().getColumn(6).setCellRenderer(new DatetimeTableCellRenderer(new SimpleDateFormat("dd/MM/yyyy HH:mm:ss")));
-		//sort on quote time.
-		SwingUtility.setTableSorter(marketDataTable, 6, SortOrder.DESCENDING);
+		if (isSummaryTable)
+			SwingUtility.setTableSorter(marketDataTable, 0, SortOrder.ASCENDING);
+		else {//sort on quote time --> column 6.
+			marketDataTable.getColumnModel().getColumn(6).setCellRenderer(new DatetimeTableCellRenderer(new SimpleDateFormat("dd/MM/yyyy HH:mm:ss")));
+			SwingUtility.setTableSorter(marketDataTable, 6, SortOrder.DESCENDING);
+		}
 		marketDataTable.setPreferredScrollableViewportSize(new Dimension(500, 70));
 		marketDataTable.setFillsViewportHeight(true);
 		return marketDataTable;
@@ -64,4 +111,12 @@ public final class MarketDataPanel extends JPanel {
 		return marketDataTable;
 	}
 
+	public JTable getMarketDataSummaryTable() {
+		return marketDataSummaryTable;
+	}
+	
+	@Override
+	public void cleanUp() throws Exception {
+		Utility.shutdownExecutorService(es, 5, TimeUnit.SECONDS);
+	}
 }

@@ -27,6 +27,7 @@ import javax.swing.border.EtchedBorder;
 import javax.swing.table.TableCellRenderer;
 
 import com.projects.tradingMachine.tradeMonitor.util.DatetimeTableCellRenderer;
+import com.projects.tradingMachine.tradeMonitor.util.PanelCleanUp;
 import com.projects.tradingMachine.tradeMonitor.util.SwingUtility;
 import com.projects.tradingMachine.utility.Utility;
 import com.projects.tradingMachine.utility.order.OrderSide;
@@ -42,7 +43,7 @@ import com.projects.tradingMachine.utility.order.SimpleOrder;
  * 		<li>As a side content, North to the tables, it shows statistics about the orders, which get updated every 1 second.</li>
  * 	</ul>
  * */
-public final class OrdersPanel extends JPanel {
+public final class OrdersPanel extends JPanel implements PanelCleanUp {
 	private static final long serialVersionUID = 1L;
 	private final List<SimpleOrder> filledOrders;
 	private final List<SimpleOrder> rejectedOrders;
@@ -144,7 +145,8 @@ public final class OrdersPanel extends JPanel {
 		return rejectedOrdersTable;
 	}
 	
-	public void cleanUp() throws InterruptedException {
+	@Override
+	public void cleanUp() throws Exception {
 		Utility.shutdownExecutorService(es, 5, TimeUnit.SECONDS);
 	}
 	

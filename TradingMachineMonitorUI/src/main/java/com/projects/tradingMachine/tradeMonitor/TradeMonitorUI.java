@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -156,12 +157,12 @@ public final class TradeMonitorUI implements MessageListener {
     	Executors.newSingleThreadScheduledExecutor().execute(() -> {
     		IntStream.range(1, 100000).forEach(i -> 
     		{
-    			Arrays.asList("RIEN", "UBSN", "CSGN").stream().forEach(a -> {
+    			Arrays.asList("ABBN","BION","HBMN","AEVS","SAHN","RO","RIEN","UBSN","CSGN").stream().forEach(a -> {
     				marketDataItems.add(Utility.buildRandomMarketDataItem(a));
     				((AbstractTableModel)marketDataPanel.getMarketDataTable().getModel()).fireTableDataChanged();
     				});
     			try {
-    				Thread.sleep(500);
+    				Thread.sleep(1000);
     			} catch (final Exception e) {
     				e.printStackTrace();
     			}

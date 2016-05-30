@@ -7,7 +7,7 @@ import java.awt.Dimension;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -39,7 +39,7 @@ import com.projects.tradingMachine.utility.marketData.MarketData;
 public final class MarketDataPanel extends JPanel implements PanelCleanUp {
 	private static final long serialVersionUID = 1L;
 	private final List<MarketData> marketDataItems;
-	private List<MarketDataSummary> marketDataSummaryItems;
+	private final List<MarketDataSummary> marketDataSummaryItems = new ArrayList<>();
 	private final JTable marketDataTable;
 	private final JTable marketDataSummaryTable;
 	private final ScheduledExecutorService es = Executors.newScheduledThreadPool(1);
@@ -47,7 +47,7 @@ public final class MarketDataPanel extends JPanel implements PanelCleanUp {
 	public MarketDataPanel(final List<MarketData> marketDataItems) throws FileNotFoundException, IOException, JMSException {
 		super(new BorderLayout(10, 20)); 
 		this.marketDataItems = marketDataItems;
-		marketDataSummaryItems = buildMarketDataSummary();
+		buildMarketDataSummary();
 		marketDataTable = buildMarketDataTable(false);
 		marketDataSummaryTable = buildMarketDataTable(true);
 		final JScrollPane marketDataSummaryScrollPanel = new JScrollPane(marketDataSummaryTable);
@@ -57,26 +57,26 @@ public final class MarketDataPanel extends JPanel implements PanelCleanUp {
 		marketDataScrollPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(EtchedBorder.LOWERED), "Market Data"));
 		add(marketDataScrollPanel, BorderLayout.CENTER);
 		es.scheduleWithFixedDelay(() -> {
-			marketDataSummaryItems = buildMarketDataSummary();
-			((AbstractTableModel)marketDataSummaryTable.getModel()).fireTableDataChanged();  
-        }, 2, 1, TimeUnit.SECONDS); 
+			buildMarketDataSummary();
+			((AbstractTableModel)marketDataSummaryTable.getModel()).fireTableDataChanged();
+        }, 1, 1, TimeUnit.SECONDS); 
 	}
 	
-	private List<MarketDataSummary> buildMarketDataSummary() {
-		final List<MarketDataSummary> summary = new LinkedList<>();
-		final Map<String, Long> itemsNumber = marketDataItems.parallelStream().
+	private void buildMarketDataSummary() {
+		marketDataSummaryItems.clear();
+		final ArrayList<MarketData> marketDataItemsCopy= new ArrayList<>(marketDataItems);
+		final Map<String, Long> itemsNumber = marketDataItemsCopy.parallelStream().
 				collect(Collectors.groupingBy(MarketData::getSymbol, Collectors.counting()));
-		final Map<String, Double> avgBid = marketDataItems.parallelStream().
+		final Map<String, Double> avgBid = marketDataItemsCopy.parallelStream().
 				collect(Collectors.groupingBy(MarketData::getSymbol, Collectors.averagingDouble(MarketData::getBid)));
-		final Map<String, Double> avgAsk = marketDataItems.parallelStream().
+		final Map<String, Double> avgAsk = marketDataItemsCopy.parallelStream().
 				collect(Collectors.groupingBy(MarketData::getSymbol, Collectors.averagingDouble(MarketData::getAsk)));
-		final Map<String, Double> avgBidSize = marketDataItems.parallelStream().
+		final Map<String, Double> avgBidSize = marketDataItemsCopy.parallelStream().
 				collect(Collectors.groupingBy(MarketData::getSymbol, Collectors.averagingDouble(MarketData::getBidSize)));
-		final Map<String, Double> avgAskSize = marketDataItems.parallelStream().
+		final Map<String, Double> avgAskSize = marketDataItemsCopy.parallelStream().
 				collect(Collectors.groupingBy(MarketData::getSymbol, Collectors.averagingDouble(MarketData::getAskSize)));
 		for(final Entry<String, Long> entry : itemsNumber.entrySet()) 
-			 summary.add(new MarketDataSummary(entry.getKey(), avgBid.get(entry.getKey()), avgAsk.get(entry.getKey()), avgBidSize.get(entry.getKey()), avgAskSize.get(entry.getKey()), entry.getValue()));
-		return summary;
+			marketDataSummaryItems.add(new MarketDataSummary(entry.getKey(), avgBid.get(entry.getKey()), avgAsk.get(entry.getKey()), avgBidSize.get(entry.getKey()), avgAskSize.get(entry.getKey()), entry.getValue()));
 	}
 
 	private JTable buildMarketDataTable(boolean isSummaryTable) throws FileNotFoundException, IOException, JMSException {

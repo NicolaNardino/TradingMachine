@@ -1,13 +1,15 @@
 package com.projects.tradingMachine.services;
 
+import static java.util.stream.Collectors.groupingBy;
+
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -21,11 +23,12 @@ import com.projects.tradingMachine.services.database.noSql.MongoDBConnection;
 import com.projects.tradingMachine.services.database.noSql.MongoDBManager;
 import com.projects.tradingMachine.utility.Utility;
 import com.projects.tradingMachine.utility.order.OrderSide;
+import com.projects.tradingMachine.utility.order.OrderTimeInForce;
 import com.projects.tradingMachine.utility.order.OrderType;
 import com.projects.tradingMachine.utility.order.SimpleOrder;
 
 /**
- * Extracts some statistics out of the filled orders stored to the MongoDB database.
+ * Extracts statistics out of the filled orders stored to the MongoDB database.
  * 
  * */
 public final class StatsRunner implements Runnable {
@@ -44,7 +47,9 @@ public final class StatsRunner implements Runnable {
 	public void run() {
 		while (!Thread.currentThread().isInterrupted()) {
 			try {
-				logger.info(getOrderDetailsByType()+getOrderDetailsBySide(5));
+				final List<SimpleOrder> orders = mongoDBManager.getOrders(Optional.ofNullable(null));
+				logger.info(groupOrdersByType(orders)+groupOrdersBySide(orders, 5)+groupOrdersBySideTypeTimeInForce(orders)+groupOrdersWithAndWithoutMarketData(orders));
+				//testReduction(orders);
 				TimeUnit.SECONDS.sleep(Integer.valueOf(properties.getProperty("statsPublishingPeriod")));
 			}
 			catch(final InterruptedException ex) {
@@ -65,10 +70,10 @@ public final class StatsRunner implements Runnable {
 	/**
 	 * Statistics based on the order type.
 	 * */
-	private String getOrderDetailsByType() {
+	private String groupOrdersByType(final List<SimpleOrder> orders) {
 		final StringBuilder sb = new StringBuilder("\n");
-		final Map<OrderType, List<SimpleOrder>> orders = mongoDBManager.getOrders(Optional.ofNullable(null)).stream().collect(Collectors.groupingBy(SimpleOrder::getType));
-		for (final Map.Entry<OrderType, List<SimpleOrder>> ot : orders.entrySet()) {
+		final Map<OrderType, List<SimpleOrder>> groupedOrders = orders.parallelStream().collect(Collectors.groupingBy(SimpleOrder::getType));
+		for (final Map.Entry<OrderType, List<SimpleOrder>> ot : groupedOrders.entrySet()) {
 			final String avgMarketPrice = String.valueOf(Utility.roundDouble(ot.getValue().stream().mapToDouble(SimpleOrder::getAvgPx).average().getAsDouble(), 2)); 
 			switch(ot.getKey()) {
 				case MARKET: 
@@ -92,11 +97,11 @@ public final class StatsRunner implements Runnable {
 	/**
 	 * Statistics based on the order side.
 	 * */
-	private String getOrderDetailsBySide(int topOrdersLimit) {
+	private String groupOrdersBySide(final List<SimpleOrder> orders, int topOrdersLimit) {
 		final StringBuilder sb = new StringBuilder("\n");
-		final Map<OrderSide, List<SimpleOrder>> orders = mongoDBManager.getOrders(Optional.ofNullable(null)).stream().collect(Collectors.groupingBy(SimpleOrder::getSide));
+		final Map<OrderSide, List<SimpleOrder>> groupedOrders = orders.parallelStream().collect(Collectors.groupingBy(SimpleOrder::getSide));
 		final Comparator<SimpleOrder> ordersQuantityComparator = (c1, c2) -> Integer.compare(c1.getQuantity(), c2.getQuantity());
-		for (final Map.Entry<OrderSide, List<SimpleOrder>> ot : orders.entrySet()) {
+		for (final Map.Entry<OrderSide, List<SimpleOrder>> ot : groupedOrders.entrySet()) {
 			switch(ot.getKey()) {
 				case BUY: 
 					sb.append("BUY orders number: ").append(String.valueOf(ot.getValue().size())).append("\n");
@@ -104,18 +109,54 @@ public final class StatsRunner implements Runnable {
 					break;
 				case SELL: 
 					sb.append("SELL orders number: ").append(String.valueOf(ot.getValue().size())).append("\n");
-					sb.append("Top "+topOrdersLimit+" smallest quantity SELL orders: \n\t").append(ot.getValue().stream().sorted(ordersQuantityComparator).limit(topOrdersLimit).map(so -> so.getSymbol()+"/ "+so.getQuantity()+"/ "+so.getStoreDate()).collect(Collectors.joining("\n\t"))).append("\n\n");
+					sb.append("Top "+topOrdersLimit+" smallest quantity SELL orders: \n\t").append(ot.getValue().stream().
+							sorted(Comparator.comparingInt(SimpleOrder::getQuantity)).limit(topOrdersLimit).map(so -> so.getSymbol()+"/ "+so.getQuantity()+"/ "+so.getStoreDate()).collect(Collectors.joining("\n\t"))).append("\n\n");
+					//Comparator.comparingInt(SimpleOrder::getQuantity) --> the method reference comparator way.
 					break;
 			}
 		}
 		return sb.toString();
 	}
 	
+	/**
+	 * Does a three-levels grouping based on side, type and time in force.
+	 * */
+	private String groupOrdersBySideTypeTimeInForce(final List<SimpleOrder> orders) {
+		final StringBuilder sb = new StringBuilder("Orders split based on side, type and time in force.\n umber of\n");
+		final Map<OrderSide, Map<OrderType, Map<OrderTimeInForce, Long>>> threeLeveslGroupedOrders = orders.parallelStream().
+				collect(groupingBy(SimpleOrder::getSide, groupingBy(SimpleOrder::getType, groupingBy(SimpleOrder::getTimeInForce, Collectors.counting()))));
+		for (final Map.Entry<OrderSide, Map<OrderType, Map<OrderTimeInForce, Long>>> threeLeveslGroupedOrdersEntry : threeLeveslGroupedOrders.entrySet()) {
+			for (final Map.Entry<OrderType, Map<OrderTimeInForce, Long>> groupedByOrderTypeAndTimeInForceEntry : threeLeveslGroupedOrdersEntry.getValue().entrySet())
+				for (final Map.Entry<OrderTimeInForce, Long> groupedByTimeInForceEntry : groupedByOrderTypeAndTimeInForceEntry.getValue().entrySet())
+					sb.append("\t"+threeLeveslGroupedOrdersEntry.getKey()+"/ "+ groupedByOrderTypeAndTimeInForceEntry.getKey()+ "/ "+groupedByTimeInForceEntry.getKey()+ " orders: "+groupedByTimeInForceEntry.getValue()+"\n");
+		}
+		sb.append("\n");
+		return sb.toString();
+	}
+	
+	private String groupOrdersWithAndWithoutMarketData(final List<SimpleOrder> orders) {
+		final Map<Boolean, Long> groupByMarketDataID = orders.parallelStream().
+				collect(Collectors.partitioningBy(so -> so.getMarketDataID() != null, Collectors.counting()));
+		return "\nOrders with market data id: "+groupByMarketDataID.get(true)+", without: "+groupByMarketDataID.get(false)+"\n";
+	}
+	
 	public static void main(final String[] args) throws JMSException, Exception {
-		final ExecutorService es = Executors.newFixedThreadPool(1);
+		final ScheduledExecutorService es = Executors.newScheduledThreadPool(1);
 		final Future<?> f = es.submit(new StatsRunner(Utility.getApplicationProperties("tradingMachineServices.properties")));
 		TimeUnit.SECONDS.sleep(60);
 		f.cancel(true);
 		Utility.shutdownExecutorService(es, 1, TimeUnit.SECONDS);
 	}
+	
+	/**
+	 * Tests different ways to do the same reduction. 
+	 */
+	/*private void testReduction(final List<SimpleOrder> orders) {
+		final int quantitySum1 = orders.parallelStream().mapToInt(SimpleOrder::getQuantity).reduce(0, (so1, so2) -> so1 + so2);
+		final int quantitySum2 = orders.parallelStream().mapToInt(SimpleOrder::getQuantity).reduce(0, Integer::sum);
+		final int quantitySum3 = orders.parallelStream().collect(Collectors.reducing(0, SimpleOrder::getQuantity, Integer::sum));
+		final Integer quantitySum4 = orders.parallelStream().collect(Collectors.summingInt(SimpleOrder::getQuantity));
+		final int quantitySum5 = orders.parallelStream().mapToInt(SimpleOrder::getQuantity).sum();
+		System.out.println(quantitySum1+"/ "+quantitySum2+"/ "+quantitySum3+"/"+quantitySum4+"/ "+quantitySum5);
+	}*/
 }

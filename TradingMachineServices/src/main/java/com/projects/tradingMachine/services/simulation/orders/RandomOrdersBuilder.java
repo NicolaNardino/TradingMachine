@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
-import java.util.stream.IntStream;
+import java.util.stream.*;
 
 import com.projects.tradingMachine.utility.Utility;
 import com.projects.tradingMachine.utility.order.OrderSide;
@@ -13,7 +13,7 @@ import com.projects.tradingMachine.utility.order.OrderType;
 import com.projects.tradingMachine.utility.order.SimpleOrder;
 
 /**
- * Orders randomly built. 
+ * Randomly built orders. 
  * */
 public final class RandomOrdersBuilder {
 	private static final Random randomGenerator = new Random();
@@ -49,6 +49,9 @@ public final class RandomOrdersBuilder {
 	}
 	
 	public static void main(final String[] args) {
-		IntStream.range(0, 10).forEach(i -> System.out.println(RandomOrdersBuilder.build(Arrays.asList("RIEN", "UBSN", "CSGN"))));
+		//IntStream.range(0, 10).forEach(i -> System.out.println(RandomOrdersBuilder.build(Arrays.asList("RIEN", "UBSN", "CSGN"))));
+		final Stream<SimpleOrder> ordersStream = Stream.generate(() -> RandomOrdersBuilder.build(Arrays.asList("RIEN", "UBSN", "CSGN"))).limit(100000).parallel();
+		ordersStream.forEach(System.out::println);
 	}
+	
 }

@@ -3,7 +3,7 @@ package com.projects.tradingMachine.utility.marketData;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.UUID;
-import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import com.projects.tradingMachine.utility.Utility;
 

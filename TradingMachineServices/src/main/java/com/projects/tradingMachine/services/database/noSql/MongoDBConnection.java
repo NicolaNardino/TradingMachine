@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoDatabase;
-import com.projects.tradingMachine.services.database.DatabaseProperties;
+import com.projects.tradingMachine.utility.database.DatabaseProperties;
 
 public final class MongoDBConnection implements AutoCloseable {
 	private static Logger logger = LoggerFactory.getLogger(MongoDBConnection.class);

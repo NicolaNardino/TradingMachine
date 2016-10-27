@@ -1,13 +1,20 @@
 package com.projects.tradingMachine.server;
 
+import java.sql.SQLException;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import com.projects.tradingMachine.utility.Utility;
+import org.apache.commons.dbcp2.BasicDataSource;
 
+import com.projects.tradingMachine.utility.Utility;
+import com.projects.tradingMachine.utility.database.DatabaseProperties;
+import com.projects.tradingMachine.utility.database.PooledDataSourceBuilder;
+
+import quickfix.ConfigError;
 import quickfix.Dictionary;
 import quickfix.DoNotSend;
+import quickfix.FieldConvertError;
 import quickfix.FieldNotFound;
 import quickfix.IncorrectDataFormat;
 import quickfix.IncorrectTagValue;
@@ -31,13 +38,18 @@ public class TradingMachineFixAcceptorApplication extends quickfix.MessageCracke
     private final MarketDataManager marketDataManager;
     private final ExecutorService executor;
     private final SessionSettings settings;
+    private final BasicDataSource creditCheckConnectionPool;
     
     public TradingMachineFixAcceptorApplication(final SessionSettings settings) throws Exception {
     	this.settings = settings;
-        final Properties applicationProperties = Utility.getApplicationProperties("tradingMachine.properties");
+    	final Properties applicationProperties = Utility.getApplicationProperties("tradingMachine.properties");
 		marketDataManager = new MarketDataManager(applicationProperties);
 		marketDataManager.start();
         executor = Executors.newFixedThreadPool(Integer.valueOf(applicationProperties.getProperty("numberProcessingOrderThreads")));
+        creditCheckConnectionPool = PooledDataSourceBuilder.getDataSource(new DatabaseProperties(applicationProperties.getProperty("mySQL.host"), 
+        		Integer.valueOf(applicationProperties.getProperty("mySQL.port")), applicationProperties.getProperty("mySQL.database"), 
+        		applicationProperties.getProperty("mySQL.userName"), applicationProperties.getProperty("mySQL.password")), 
+        		Integer.valueOf(applicationProperties.getProperty("creditCheckDatabasePoolConnections")));
     }
 
     @Override
@@ -96,7 +108,7 @@ public class TradingMachineFixAcceptorApplication extends quickfix.MessageCracke
     }
     
     public void onMessage(final quickfix.fix50.NewOrderSingle order, final SessionID sessionID)
-            throws FieldNotFound, UnsupportedMessageType, IncorrectTagValue {
-    	executor.execute(new MatchingEngine(marketDataManager, order, sessionID));
+            throws FieldNotFound, UnsupportedMessageType, IncorrectTagValue, NumberFormatException, ClassNotFoundException, SQLException, ConfigError, FieldConvertError {
+    	executor.execute(new MatchingEngine(creditCheckConnectionPool, marketDataManager, order, sessionID));
     } 
 }

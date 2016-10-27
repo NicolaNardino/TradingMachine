@@ -34,6 +34,7 @@ import quickfix.SessionID;
 import quickfix.SessionNotFound;
 import quickfix.SessionSettings;
 import quickfix.UnsupportedMessageType;
+import quickfix.field.Account;
 import quickfix.field.AvgPx;
 import quickfix.field.ClOrdID;
 import quickfix.field.CumQty;
@@ -182,6 +183,8 @@ public class TradingMachineFixInitiatorApplication implements Application, Messa
         case OrdStatus.REJECTED: 
         	order.setRejected(true);
         	order.setOpen(0);
+        	if (message.isSetField(new Account()))
+        		order.setCreditCheckFailed(true);
         	final ObjectMessage m = executedOrdersProducer.getSession().createObjectMessage(order);
         	m.setStringProperty("Status", "REJECTED");
         	executedOrdersProducer.getProducer().send(m);

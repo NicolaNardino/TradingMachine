@@ -18,10 +18,10 @@ import javax.jms.JMSException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.projects.tradingMachine.services.database.DatabaseProperties;
 import com.projects.tradingMachine.services.database.noSql.MongoDBConnection;
 import com.projects.tradingMachine.services.database.noSql.MongoDBManager;
 import com.projects.tradingMachine.utility.Utility;
+import com.projects.tradingMachine.utility.database.DatabaseProperties;
 import com.projects.tradingMachine.utility.order.OrderSide;
 import com.projects.tradingMachine.utility.order.OrderTimeInForce;
 import com.projects.tradingMachine.utility.order.OrderType;

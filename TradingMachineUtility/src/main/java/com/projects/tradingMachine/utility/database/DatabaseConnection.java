@@ -1,4 +1,4 @@
-package com.projects.tradingMachine.services.database.sql;
+package com.projects.tradingMachine.utility.database;
 
 import java.sql.Connection;
 

@@ -1,17 +1,22 @@
 package com.projects.tradingMachine.server;
 
+import java.sql.SQLException;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.commons.dbcp2.BasicDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.projects.tradingMachine.utility.Utility;
+import com.projects.tradingMachine.utility.database.creditCheck.CreditCheck;
+import com.projects.tradingMachine.utility.database.creditCheck.ICreditCheck;
 import com.projects.tradingMachine.utility.marketData.MarketData;
 
 import quickfix.FieldNotFound;
 import quickfix.LogUtil;
 import quickfix.Message;
 import quickfix.SessionID;
+import quickfix.field.Account;
 import quickfix.field.AvgPx;
 import quickfix.field.CumQty;
 import quickfix.field.ExecID;
@@ -42,11 +47,13 @@ public final class MatchingEngine implements Runnable {
     private final MarketDataManager marketDataManager;
 	private final quickfix.fix50.NewOrderSingle order;
 	private final SessionID sessionID;
+	private final ICreditCheck creditCheck;
     
-	public MatchingEngine(final MarketDataManager marketDataManager, final quickfix.fix50.NewOrderSingle order, final SessionID sessionID) {
+	public MatchingEngine(final BasicDataSource creditCheckConnectionPool, final MarketDataManager marketDataManager, final quickfix.fix50.NewOrderSingle order, final SessionID sessionID) throws NumberFormatException, ClassNotFoundException, SQLException {
 		this.marketDataManager = marketDataManager;
 		this.order = order;
 		this.sessionID = sessionID;
+		creditCheck = new CreditCheck(creditCheckConnectionPool.getConnection());
 	}
 	
 	@Override
@@ -61,28 +68,45 @@ public final class MatchingEngine implements Runnable {
             //try to fill now.
             final PriceQuantity priceQuantity = findPriceAndQuantity(order, 100);
             if (priceQuantity != null) {
-            	final quickfix.fix50.ExecutionReport executionReport = new quickfix.fix50.ExecutionReport(
-                        buildOrderID(), buildExecID(), new ExecType(ExecType.FILL), new OrdStatus(
-                                OrdStatus.FILLED), order.getSide(), new LeavesQty(0), new CumQty(priceQuantity.getQuantity()));
-                executionReport.set(order.getClOrdID());
-                executionReport.set(order.getSymbol());
-                executionReport.set(order.getOrderQty());
-                executionReport.set(new Text(String.valueOf(priceQuantity.getMarketDataId())));
-                executionReport.set(new LastQty(priceQuantity.getQuantity()));
-                executionReport.set(new LastPx(priceQuantity.getPrice()));
-                executionReport.set(new AvgPx(priceQuantity.getPrice()));
-                Utility.sendMessage(sessionID, executionReport);	
+            	if (!creditCheck.hasEnoughCredit(priceQuantity.getValue())) 
+            		sendReject(order, sessionID, true);
+            	else {
+            		final quickfix.fix50.ExecutionReport executionReport = new quickfix.fix50.ExecutionReport(
+                            buildOrderID(), buildExecID(), new ExecType(ExecType.FILL), new OrdStatus(
+                                    OrdStatus.FILLED), order.getSide(), new LeavesQty(0), new CumQty(priceQuantity.getQuantity()));
+                    executionReport.set(order.getClOrdID());
+                    executionReport.set(order.getSymbol());
+                    executionReport.set(order.getOrderQty());
+                    executionReport.set(new Text(String.valueOf(priceQuantity.getMarketDataId())));
+                    executionReport.set(new LastQty(priceQuantity.getQuantity()));
+                    executionReport.set(new LastPx(priceQuantity.getPrice()));
+                    executionReport.set(new AvgPx(priceQuantity.getPrice()));
+                    creditCheck.setCredit(-priceQuantity.getValue());
+                    Utility.sendMessage(sessionID, executionReport);
+            	}
             }
-            else {//order rejected.
-            	final quickfix.fix50.ExecutionReport executionReport = new quickfix.fix50.ExecutionReport(
-                        buildOrderID(), buildExecID(), new ExecType(ExecType.REJECTED), new OrdStatus(OrdStatus.REJECTED), 
-                        order.getSide(), new LeavesQty(order.getOrderQty().getValue()), new CumQty(0));
-            	executionReport.set(order.getClOrdID());
-            	Utility.sendMessage(sessionID, executionReport);
-            }
+            else //order rejected.
+            	sendReject(order, sessionID, false);
         } catch (final Exception e) {
             LogUtil.logThrowable(sessionID, e.getMessage(), e);
-        }	
+        }
+		finally {
+			try {
+				creditCheck.closeConnection();
+			} catch (final SQLException e) {
+				log.warn("Unable to close credit check database connection:\n"+e.getMessage());
+			}
+		}
+	}
+	
+	private static void sendReject(final quickfix.fix50.NewOrderSingle  order, final SessionID sessionID, final boolean creditCheckFailed) throws FieldNotFound {
+		final quickfix.fix50.ExecutionReport executionReport = new quickfix.fix50.ExecutionReport(
+                buildOrderID(), buildExecID(), new ExecType(ExecType.REJECTED), new OrdStatus(OrdStatus.REJECTED), 
+                order.getSide(), new LeavesQty(order.getOrderQty().getValue()), new CumQty(0));
+    	executionReport.set(order.getClOrdID());
+    	if (creditCheckFailed)
+    		executionReport.set(new Account("Failed Credit Check"));//indicates not enough credit.
+    	Utility.sendMessage(sessionID, executionReport);
 	}
 	
 	private PriceQuantity findPriceAndQuantity(final quickfix.fix50.NewOrderSingle order, final int maxNrTrials) throws FieldNotFound, InterruptedException {
@@ -156,6 +180,10 @@ public final class MatchingEngine implements Runnable {
 		
 		public String getMarketDataId() {
 			return marketDataId;
+		}
+		
+		public double getValue() {
+			return price * quantity;
 		}
 		
 	}

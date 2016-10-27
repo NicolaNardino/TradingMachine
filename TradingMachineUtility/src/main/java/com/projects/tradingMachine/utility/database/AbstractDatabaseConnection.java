@@ -1,4 +1,4 @@
-package com.projects.tradingMachine.services.database.sql;
+package com.projects.tradingMachine.utility.database;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -6,8 +6,6 @@ import java.sql.SQLException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.projects.tradingMachine.services.database.DatabaseProperties;
 
 public abstract class AbstractDatabaseConnection implements DatabaseConnection {
 	private static Logger logger = LoggerFactory.getLogger(AbstractDatabaseConnection.class);

@@ -2,6 +2,7 @@ package com.projects.tradingMachine.services.database;
 
 import java.sql.SQLException;
 import java.util.Properties;
+import java.util.Random;
 
 import javax.jms.JMSException;
 import javax.jms.Message;
@@ -13,28 +14,36 @@ import org.slf4j.LoggerFactory;
 
 import com.projects.tradingMachine.services.database.noSql.MongoDBConnection;
 import com.projects.tradingMachine.services.database.noSql.MongoDBManager;
-import com.projects.tradingMachine.services.database.sql.MySqlConnection;
 import com.projects.tradingMachine.services.database.sql.MySqlManager;
 import com.projects.tradingMachine.utility.ServiceLifeCycle;
 import com.projects.tradingMachine.utility.TradingMachineMessageConsumer;
 import com.projects.tradingMachine.utility.Utility;
 import com.projects.tradingMachine.utility.Utility.DestinationType;
+import com.projects.tradingMachine.utility.database.DatabaseProperties;
+import com.projects.tradingMachine.utility.database.MySqlConnection;
+import com.projects.tradingMachine.utility.database.creditCheck.CreditCheck;
+import com.projects.tradingMachine.utility.database.creditCheck.ICreditCheck;
 import com.projects.tradingMachine.utility.order.SimpleOrder;
 
 public final class OrdersBackEndStore implements MessageListener, ServiceLifeCycle
 {
 	private static Logger logger = LoggerFactory.getLogger(OrdersBackEndStore.class);
+	private static final Random randomGenerator = new Random();
 	
 	private final TradingMachineMessageConsumer ordersConsumer;
 	private final DataManager mongoDBManager;
-	private final DataManager mySqlManager; 
+	private final DataManager mySqlManager;
+	private final ICreditCheck creditCheck;
 	
 	public OrdersBackEndStore(final Properties p) throws JMSException, ClassNotFoundException, SQLException {
 		ordersConsumer = new TradingMachineMessageConsumer(p.getProperty("activeMQ.url"), p.getProperty("activeMQ.executedOrdersTopic"), DestinationType.Topic, this, "BackEnd", null, null);
 		mongoDBManager = new MongoDBManager(new MongoDBConnection(new DatabaseProperties(p.getProperty("mongoDB.host"), 
 				Integer.valueOf(p.getProperty("mongoDB.port")), p.getProperty("mongoDB.database"))), p.getProperty("mongoDB.executedOrdersCollection"));
-		mySqlManager = new MySqlManager(new MySqlConnection(new DatabaseProperties(p.getProperty("mySQL.host"), Integer.valueOf(p.getProperty("mySQL.port")), p.getProperty("mySQL.database"), 
-				p.getProperty("mySQL.userName"), p.getProperty("mySQL.password"))));
+		final MySqlConnection mySqlConnection = new MySqlConnection(new DatabaseProperties(p.getProperty("mySQL.host"), 
+				Integer.valueOf(p.getProperty("mySQL.port")), p.getProperty("mySQL.database"), 
+				p.getProperty("mySQL.userName"), p.getProperty("mySQL.password")));
+		mySqlManager = new MySqlManager(mySqlConnection);
+		creditCheck = new CreditCheck(mySqlConnection.getConnection());
 	}
 	
 	@Override
@@ -53,6 +62,8 @@ public final class OrdersBackEndStore implements MessageListener, ServiceLifeCyc
 	public void onMessage(final Message message) {
 		try {
 			final SimpleOrder order = (SimpleOrder)((ObjectMessage)message).getObject();
+			if (order.isCreditCheckFailed()) //resets the credit.
+				creditCheck.setCredit(Utility.roundDouble(randomGenerator.nextDouble() * 99999, 2));
 			mongoDBManager.storeOrder(order);
 			mySqlManager.storeOrder(order);
 			

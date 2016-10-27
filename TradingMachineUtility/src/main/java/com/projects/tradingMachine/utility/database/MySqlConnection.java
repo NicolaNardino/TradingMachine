@@ -1,8 +1,6 @@
-package com.projects.tradingMachine.services.database.sql;
+package com.projects.tradingMachine.utility.database;
 
 import java.sql.SQLException;
-
-import com.projects.tradingMachine.services.database.DatabaseProperties;
 
 public class MySqlConnection extends AbstractDatabaseConnection {
 	
@@ -12,6 +10,6 @@ public class MySqlConnection extends AbstractDatabaseConnection {
 
 	@Override
 	protected String getConnectionString() {
-		return "jdbc:mysql://"+databaseProperties.getHost()+"/"+databaseProperties.getDatabaseName();
+		return DbUtility.getMySqlConnectionUrl(databaseProperties);
 	}
 }

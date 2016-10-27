@@ -4,10 +4,10 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.GridLayout;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,9 +24,11 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.SortOrder;
 import javax.swing.border.EtchedBorder;
+import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
 
 import com.projects.tradingMachine.tradeMonitor.util.DatetimeTableCellRenderer;
+import com.projects.tradingMachine.tradeMonitor.util.OrdersStats;
 import com.projects.tradingMachine.tradeMonitor.util.PanelCleanUp;
 import com.projects.tradingMachine.tradeMonitor.util.SwingUtility;
 import com.projects.tradingMachine.utility.Utility;
@@ -45,12 +47,23 @@ import com.projects.tradingMachine.utility.order.SimpleOrder;
  * */
 public final class OrdersPanel extends JPanel implements PanelCleanUp {
 	private static final long serialVersionUID = 1L;
-	private final List<SimpleOrder> filledOrders;
-	private final List<SimpleOrder> rejectedOrders;
-	private JTable filledOrdersTable;
-	private JTable rejectedOrdersTable;
+	private final List<SimpleOrder> filledOrders, rejectedOrders;
+	private final List<OrdersStats> ordersStats;
+	private JTable filledOrdersTable, rejectedOrdersTable, ordersStatsTable;
 	private final  Map<StatsLabel, JLabel> statLabels = new HashMap<>();
 	private final ScheduledExecutorService es = Executors.newScheduledThreadPool(1);
+	
+	private static OrdersStats buildOrdersStats(final List<SimpleOrder> allOrders) {
+		final Map<Boolean, Long> groupedByRjectionStatus = allOrders.parallelStream().
+				collect(Collectors.partitioningBy(SimpleOrder::isRejected, Collectors.counting()));
+		final Map<OrderSide, Long> groupedBySide = allOrders.parallelStream().
+				collect(Collectors.groupingBy(SimpleOrder::getSide, Collectors.counting()));
+		final Map<OrderType, Long> groupedByType = allOrders.parallelStream().
+				collect(Collectors.groupingBy(SimpleOrder::getType, Collectors.counting()));
+		return new OrdersStats(allOrders.size(), groupedByRjectionStatus.get(false), groupedByRjectionStatus.get(true), 
+				groupedBySide.get(OrderSide.BUY), groupedBySide.get(OrderSide.SELL), groupedByType.get(OrderType.MARKET), 
+				groupedByType.get(OrderType.LIMIT), groupedByType.get(OrderType.STOP));
+	}
 	
 	public OrdersPanel(final List<SimpleOrder> filledOrders, final List<SimpleOrder> rejectedOrders) throws FileNotFoundException, IOException, JMSException {
         super(new BorderLayout(10, 20)); 
@@ -58,29 +71,22 @@ public final class OrdersPanel extends JPanel implements PanelCleanUp {
         this.rejectedOrders = rejectedOrders;
         filledOrdersTable = buildOrdersTable(filledOrders, true);
         rejectedOrdersTable = buildOrdersTable(rejectedOrders, false);
-        add(buildStatsPanel(), BorderLayout.NORTH);
+        ordersStats = Arrays.asList(buildOrdersStats(java.util.stream.Stream.concat(filledOrders.stream(), rejectedOrders.stream()).collect(Collectors.toList())));
+        ordersStatsTable = new JTable(new OrdersStatsTableModel(ordersStats));
+        ordersStatsTable.setPreferredScrollableViewportSize(new Dimension(500, 70));
+        ordersStatsTable.setFillsViewportHeight(true);
+        add(ordersStatsTable, BorderLayout.NORTH);
         final JScrollPane filledOrdersScrollPane = new JScrollPane(filledOrdersTable);
         filledOrdersScrollPane.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(EtchedBorder.LOWERED), "Filled Orders"));
 		add(filledOrdersScrollPane, BorderLayout.CENTER);
         final JScrollPane rejectedOrdersScrollPane = new JScrollPane(rejectedOrdersTable);
         rejectedOrdersScrollPane.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(EtchedBorder.LOWERED), "Rejected Orders"));
 		add(rejectedOrdersScrollPane, BorderLayout.SOUTH);
-        
-        //Orders stats get updated every 1 sec. 
-        es.scheduleWithFixedDelay(() -> {
-        	javax.swing.SwingUtilities.invokeLater(() -> {
-        		final Map<OrderSide, List<SimpleOrder>> ordersBySide = filledOrders.stream().collect(Collectors.groupingBy(SimpleOrder::getSide));
-        		final Map<OrderType, List<SimpleOrder>> ordersByType = filledOrders.stream().collect(Collectors.groupingBy(SimpleOrder::getType));
-        		statLabels.get(StatsLabel.TOTAL).setText(StatsLabel.TOTAL.toString()+(filledOrders.size() + rejectedOrders.size()));
-        		statLabels.get(StatsLabel.FILLED).setText(StatsLabel.FILLED.toString()+filledOrders.size());
-        		statLabels.get(StatsLabel.REJECTED).setText(StatsLabel.REJECTED.toString()+rejectedOrders.size());
-        		statLabels.get(StatsLabel.TOTAL).setText(StatsLabel.TOTAL.toString()+(filledOrders.size() + rejectedOrders.size()));
-            	statLabels.get(StatsLabel.BUY).setText(StatsLabel.BUY.toString()+ordersBySide.get(OrderSide.BUY).size());
-            	statLabels.get(StatsLabel.SELL).setText(StatsLabel.SELL.toString()+ordersBySide.get(OrderSide.SELL).size());
-            	statLabels.get(StatsLabel.MARKET).setText(StatsLabel.MARKET.toString()+ordersByType.get(OrderType.MARKET).size());
-            	statLabels.get(StatsLabel.LIMIT).setText(StatsLabel.LIMIT.toString()+ordersByType.get(OrderType.LIMIT).size());
-            	statLabels.get(StatsLabel.STOP).setText(StatsLabel.STOP.toString()+ordersByType.get(OrderType.STOP).size());    	
-        		});
+		//Orders stats get updated every 1 sec. 
+		es.scheduleWithFixedDelay(() -> {
+			ordersStats.clear();
+			ordersStats.add(buildOrdersStats(java.util.stream.Stream.concat(filledOrders.stream(), rejectedOrders.stream()).collect(Collectors.toList())));
+			((AbstractTableModel)ordersStatsTable.getModel()).fireTableDataChanged();
         }, 1, 1, TimeUnit.SECONDS); 
     }
 	
@@ -111,30 +117,6 @@ public final class OrdersPanel extends JPanel implements PanelCleanUp {
         ordersTable.setPreferredScrollableViewportSize(new Dimension(500, 70));
         ordersTable.setFillsViewportHeight(true);
         return ordersTable;
-	}
-	
-	private JPanel buildStatsPanel() {
-		final JPanel panel = new JPanel(new GridLayout(1, 8, 10, 5));
-		final Map<OrderSide, List<SimpleOrder>> ordersBySide = filledOrders.stream().collect(Collectors.groupingBy(SimpleOrder::getSide));
-		final Map<OrderType, List<SimpleOrder>> ordersByType = filledOrders.stream().collect(Collectors.groupingBy(SimpleOrder::getType));
-		statLabels.put(StatsLabel.TOTAL, new JLabel(StatsLabel.TOTAL.toString()+ (filledOrders.size() + rejectedOrders.size())));
-		panel.add(statLabels.get(StatsLabel.TOTAL));
-		statLabels.put(StatsLabel.FILLED, new JLabel(StatsLabel.FILLED.toString()+filledOrders.size()));
-		panel.add(statLabels.get(StatsLabel.FILLED));
-		statLabels.put(StatsLabel.REJECTED, new JLabel(StatsLabel.REJECTED.toString()+rejectedOrders.size()));
-		panel.add(statLabels.get(StatsLabel.REJECTED));
-		statLabels.put(StatsLabel.BUY, new JLabel(StatsLabel.BUY.toString()+ordersBySide.get(OrderSide.BUY).size()));
-		panel.add(statLabels.get(StatsLabel.BUY));
-		statLabels.put(StatsLabel.SELL, new JLabel(StatsLabel.SELL.toString()+ordersBySide.get(OrderSide.SELL).size()));
-		panel.add(statLabels.get(StatsLabel.SELL));
-		statLabels.put(StatsLabel.MARKET, new JLabel(StatsLabel.MARKET.toString()+ordersByType.get(OrderType.MARKET).size()));
-		panel.add(statLabels.get(StatsLabel.MARKET));
-		statLabels.put(StatsLabel.LIMIT, new JLabel(StatsLabel.LIMIT.toString()+ordersByType.get(OrderType.LIMIT).size()));
-		panel.add(statLabels.get(StatsLabel.LIMIT));
-		statLabels.put(StatsLabel.STOP, new JLabel(StatsLabel.STOP.toString()+ordersByType.get(OrderType.STOP).size()));
-		panel.add(statLabels.get(StatsLabel.STOP));
-		panel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(EtchedBorder.LOWERED), "Statistics"));
-		return panel;
 	}
 	
 	public JTable getFilledOrdersTable() {

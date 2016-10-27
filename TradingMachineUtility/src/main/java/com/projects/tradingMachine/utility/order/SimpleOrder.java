@@ -20,12 +20,13 @@ public class SimpleOrder implements Serializable {
     private Double limitPrice = null;
     private Double stopPrice = null;
     private double avgPx = 0.0;
-    private boolean rejected = false;
-    private boolean canceled = false;
+    private boolean rejected;
+    private boolean canceled;
     private boolean isNew = true;
     private String message = null;
     private String ID = null;
     private String originalID = null;
+    private boolean creditCheckFailed;
     
     private Date storeDate;
     private String marketDataID;
@@ -39,7 +40,7 @@ public class SimpleOrder implements Serializable {
      * */
     public SimpleOrder(final String ID, final String symbol, final int quantity, final OrderSide side, final OrderType type, 
     		final OrderTimeInForce timeInForce, final Double limitPrice, final Double stopPrice, final Double price, final String originalID, 
-    		final Date storeDate, final boolean rejected, final String marketDataID) {
+    		final Date storeDate, final boolean rejected, final String marketDataID, final boolean creditCheckFailed) {
     	this.ID = ID;
     	this.symbol = symbol;
     	this.quantity = quantity;
@@ -53,6 +54,7 @@ public class SimpleOrder implements Serializable {
     	this.storeDate = storeDate;
     	this.rejected = rejected;
     	this.marketDataID = marketDataID;
+    	this.creditCheckFailed = creditCheckFailed;
     }
     
     public SimpleOrder(final String ID) {
@@ -227,6 +229,14 @@ public class SimpleOrder implements Serializable {
 		this.marketDataID = marketDataID;
 	}
 
+	public boolean isCreditCheckFailed() {
+		return creditCheckFailed;
+	}
+	
+	public void setCreditCheckFailed(final boolean creditCheckFailed) {
+		this.creditCheckFailed = creditCheckFailed;
+	}
+	
 	@Override
 	public int hashCode() {
 		final int prime = 31;

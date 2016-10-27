@@ -3,6 +3,7 @@ package com.projects.tradingMachine.services.database.sql;
 import java.sql.CallableStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -12,8 +13,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.projects.tradingMachine.services.database.DataManager;
-import com.projects.tradingMachine.services.database.DatabaseProperties;
 import com.projects.tradingMachine.utility.Utility;
+import com.projects.tradingMachine.utility.database.DatabaseProperties;
+import com.projects.tradingMachine.utility.database.MySqlConnection;
 import com.projects.tradingMachine.utility.marketData.MarketData;
 import com.projects.tradingMachine.utility.order.OrderSide;
 import com.projects.tradingMachine.utility.order.OrderTimeInForce;
@@ -31,7 +33,7 @@ public class MySqlManager implements DataManager {
 
 	@Override
 	public void storeOrder(final SimpleOrder order) {
-		try(final CallableStatement stm = mySqlConnection.getConnection().prepareCall("{call addOrder(?,?,?,?,?,?,?,?,?)}")) {
+		try(final CallableStatement stm = mySqlConnection.getConnection().prepareCall("{call addOrder(?,?,?,?,?,?,?,?,?,?,?)}")) {
 			stm.setString(1, order.getID());
 			stm.setString(2, order.getSymbol());
 			stm.setInt(3, order.getQuantity());
@@ -52,6 +54,8 @@ public class MySqlManager implements DataManager {
 				stm.setNull(8, java.sql.Types.DOUBLE);
 			}
 			stm.setDouble(9, order.getAvgPx());
+			stm.setString(10, order.isRejected() ? "Y":"N");
+			stm.setString(11, order.isCreditCheckFailed() ? "Y":"N");
 			stm.execute();
 		}
 		catch(final Exception ex) {
@@ -73,13 +77,38 @@ public class MySqlManager implements DataManager {
 			while (rs.next())
 				result.add(new SimpleOrder(rs.getString("id"), rs.getString("symbol"), rs.getInt("quantity"), OrderSide.fromString(rs.getString("side")), 
 						OrderType.fromString(rs.getString("type")), OrderTimeInForce.fromString(rs.getString("time_in_force")), 
-						rs.getDouble("limit_price"), rs.getDouble("stop_price"), rs.getDouble("price"), rs.getString("original_id"), rs.getDate("fill_date"), false, rs.getString("market_data_id"))); 
+						rs.getDouble("limit_price"), rs.getDouble("stop_price"), rs.getDouble("price"), rs.getString("original_id"), rs.getDate("fill_date"), rs.getString("rejected").equals("Y"), rs.getString("market_data_id"), rs.getString("credit_check_failed").equals("Y"))); 
 		}
 		catch(final SQLException e) {
 			throw new RuntimeException(e);
 		}
 		logger.info("Number of orders retrieved: "+result.size());
 		return result;
+	}
+	
+	public boolean hasEnoughCredit(final String counterpartyId, final double credit) {
+		try(final CallableStatement stm = mySqlConnection.getConnection().prepareCall("{? = call hasEnoughCredit (?,?)}")) {
+			stm.registerOutParameter(1, Types.DOUBLE);
+			stm.setString(2, counterpartyId);
+			stm.setDouble(3, credit);
+			stm.execute();
+			final boolean result = stm.getBoolean(1);
+			return result;
+		}
+		catch(final SQLException e) {
+			throw new RuntimeException(e);
+		}
+	}
+	
+	public void setCredit(final String counterpartyId, final double credit) {
+		try(final CallableStatement stm = mySqlConnection.getConnection().prepareCall("{call setCredit (?,?)}")) {
+			stm.setString(1, counterpartyId);
+			stm.setDouble(2, credit);
+			stm.execute();
+		}
+		catch(final SQLException e) {
+			throw new RuntimeException(e);
+		}
 	}
 	
 	@Override

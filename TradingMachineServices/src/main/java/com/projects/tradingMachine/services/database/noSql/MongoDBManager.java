@@ -14,8 +14,8 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.model.UpdateOptions;
 import com.projects.tradingMachine.services.database.DataManager;
-import com.projects.tradingMachine.services.database.DatabaseProperties;
 import com.projects.tradingMachine.utility.Utility;
+import com.projects.tradingMachine.utility.database.DatabaseProperties;
 import com.projects.tradingMachine.utility.marketData.MarketData;
 import com.projects.tradingMachine.utility.order.OrderSide;
 import com.projects.tradingMachine.utility.order.OrderTimeInForce;
@@ -57,7 +57,7 @@ public final class MongoDBManager implements DataManager {
 		    	result.add(new SimpleOrder(doc.getString("ID"), doc.getString("Symbol"), doc.getInteger("Quantity"), 
 		    		 OrderSide.fromString(doc.getString("Side")), OrderType.fromString(doc.getString("Type")), OrderTimeInForce.fromString(doc.getString("TimeInForce")), 
 		    		 doc.getDouble("LimitPrice"), doc.getDouble("StopPrice"), doc.getDouble("Price"), doc.getString("OriginalID"), doc.getDate("StoreDate"), 
-		    		 doc.getBoolean("IsRejected"), doc.getString("MarketDataID")));
+		    		 doc.getBoolean("IsRejected"), doc.getString("MarketDataID"), doc.getBoolean("IsCreditCheckFailed")));
 		    }
 		} finally {
 		    cursor.close();
@@ -113,7 +113,8 @@ public final class MongoDBManager implements DataManager {
 		        .append("OriginalID", order.getOriginalID())
 				.append("StoreDate", new Date())
 				.append("IsRejected", order.isRejected())
-				.append("MarketDataID", order.getMarketDataID());
+				.append("MarketDataID", order.getMarketDataID())
+				.append("IsCreditCheckFailed", order.isCreditCheckFailed());
 	}
 	
 	private static Document ConvertMarketDataToBSONDocument(final MarketData marketData) {

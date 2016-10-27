@@ -1,6 +1,6 @@
-package com.projects.tradingMachine.services.database;
+package com.projects.tradingMachine.utility.database;
 
-public final class DatabaseProperties {
+public class DatabaseProperties {
 	private final int port;
 	private final String host;
 	private final String databaseName;

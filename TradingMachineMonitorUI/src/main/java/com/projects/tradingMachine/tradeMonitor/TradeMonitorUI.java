@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -29,13 +28,13 @@ import javax.swing.table.AbstractTableModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.projects.tradingMachine.services.database.DatabaseProperties;
 import com.projects.tradingMachine.services.database.noSql.MongoDBConnection;
 import com.projects.tradingMachine.services.database.noSql.MongoDBManager;
 import com.projects.tradingMachine.services.simulation.orders.RandomOrdersBuilder;
 import com.projects.tradingMachine.utility.TradingMachineMessageConsumer;
 import com.projects.tradingMachine.utility.Utility;
 import com.projects.tradingMachine.utility.Utility.DestinationType;
+import com.projects.tradingMachine.utility.database.DatabaseProperties;
 import com.projects.tradingMachine.utility.marketData.MarketData;
 import com.projects.tradingMachine.utility.order.SimpleOrder;
 

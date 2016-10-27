@@ -54,7 +54,7 @@ public final class TradeMonitorUI implements MessageListener {
 	private final List<MarketData> marketDataItems;
 	private final OrdersPanel ordersPanel;
 	private final MarketDataPanel marketDataPanel;
-	private static final boolean isWithoutLiveFeed = true;
+	private static final boolean isWithoutLiveFeed = false;
 	
 	public TradeMonitorUI(final Properties p) throws JMSException, FileNotFoundException, IOException {
 		mongoDBManager = new MongoDBManager(new MongoDBConnection(new DatabaseProperties(p.getProperty("mongoDB.host"), 

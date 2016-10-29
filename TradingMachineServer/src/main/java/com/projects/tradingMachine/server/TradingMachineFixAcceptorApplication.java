@@ -4,8 +4,12 @@ import java.sql.SQLException;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.dbcp2.BasicDataSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.projects.tradingMachine.utility.Utility;
 import com.projects.tradingMachine.utility.database.DatabaseProperties;
@@ -35,8 +39,11 @@ import quickfix.fixt11.Logon;
  * </ul>
  * */
 public class TradingMachineFixAcceptorApplication extends quickfix.MessageCracker implements quickfix.Application {
+	private final static Logger logger = LoggerFactory.getLogger(TradingMachineFixAcceptorApplication.class);
+	
     private final MarketDataManager marketDataManager;
     private final ExecutorService executor;
+    private final ScheduledExecutorService scheduledExecutorService;
     private final SessionSettings settings;
     private final BasicDataSource creditCheckConnectionPool;
     
@@ -50,6 +57,10 @@ public class TradingMachineFixAcceptorApplication extends quickfix.MessageCracke
         		Integer.valueOf(applicationProperties.getProperty("mySQL.port")), applicationProperties.getProperty("mySQL.database"), 
         		applicationProperties.getProperty("mySQL.userName"), applicationProperties.getProperty("mySQL.password")), 
         		Integer.valueOf(applicationProperties.getProperty("creditCheckDatabasePoolConnections")));
+        scheduledExecutorService = Executors.newScheduledThreadPool(1);
+        scheduledExecutorService.scheduleWithFixedDelay(() -> {
+			logger.debug("Credit check database pool,  idle: "+creditCheckConnectionPool.getNumIdle()+", active: "+creditCheckConnectionPool.getNumActive());
+        }, 1, 10, TimeUnit.SECONDS); 
     }
 
     @Override
@@ -111,4 +122,24 @@ public class TradingMachineFixAcceptorApplication extends quickfix.MessageCracke
             throws FieldNotFound, UnsupportedMessageType, IncorrectTagValue, NumberFormatException, ClassNotFoundException, SQLException, ConfigError, FieldConvertError {
     	executor.execute(new MatchingEngine(creditCheckConnectionPool, marketDataManager, order, sessionID));
     } 
+    
+    public void cleanUp() {
+    	try {
+    		Utility.shutdownExecutorService(executor, 5, TimeUnit.SECONDS);
+    	}
+    	catch(final InterruptedException ex) {
+    		logger.warn("Exception while shutting down the matching engine executor service.");
+    	}
+    	try {
+    		Utility.shutdownExecutorService(scheduledExecutorService, 5, TimeUnit.SECONDS);
+    	}
+    	catch(final InterruptedException ex) {
+    		logger.warn("Exception while shutting down utility scheduled executor service.");
+    	}
+    	try {
+			creditCheckConnectionPool.close();
+		} catch (final SQLException ex) {
+			logger.warn("Exception while closing database connection pool.");
+		}
+    }
 }

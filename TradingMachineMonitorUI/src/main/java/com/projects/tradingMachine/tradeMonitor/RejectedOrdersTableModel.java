@@ -17,7 +17,7 @@ public final class RejectedOrdersTableModel extends GenericListTableModel<Simple
 	private static final long serialVersionUID = 1L;
         
     public RejectedOrdersTableModel(final List<SimpleOrder> rejectedOrders) throws FileNotFoundException, IOException, JMSException {
-    	super(rejectedOrders, new String[] {"ID", "Symbol", "Quantity", "Side", "Type", "Time in Force", "Limit Price", "Stop Price", "Reject Date"});
+    	super(rejectedOrders, new String[] {"ID", "Symbol", "Quantity", "Side", "Type", "Time in Force", "Limit Price", "Stop Price", "Reject Date", "Credit Check Failed"});
     }
 
     @Override
@@ -53,6 +53,9 @@ public final class RejectedOrdersTableModel extends GenericListTableModel<Simple
                 break;
             case 8:
                 value = order.getStoreDate();
+                break;
+            case 9:
+                value = order.isCreditCheckFailed();
                 break;
         }
 

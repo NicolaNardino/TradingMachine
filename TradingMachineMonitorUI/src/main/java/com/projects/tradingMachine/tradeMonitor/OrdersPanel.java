@@ -8,7 +8,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
@@ -18,7 +17,6 @@ import java.util.stream.Collectors;
 
 import javax.jms.JMSException;
 import javax.swing.BorderFactory;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -47,10 +45,8 @@ import com.projects.tradingMachine.utility.order.SimpleOrder;
  * */
 public final class OrdersPanel extends JPanel implements PanelCleanUp {
 	private static final long serialVersionUID = 1L;
-	private final List<SimpleOrder> filledOrders, rejectedOrders;
 	private final List<OrdersStats> ordersStats;
 	private JTable filledOrdersTable, rejectedOrdersTable, ordersStatsTable;
-	private final  Map<StatsLabel, JLabel> statLabels = new HashMap<>();
 	private final ScheduledExecutorService es = Executors.newScheduledThreadPool(1);
 	
 	private static OrdersStats buildOrdersStats(final List<SimpleOrder> allOrders) {
@@ -67,8 +63,6 @@ public final class OrdersPanel extends JPanel implements PanelCleanUp {
 	
 	public OrdersPanel(final List<SimpleOrder> filledOrders, final List<SimpleOrder> rejectedOrders) throws FileNotFoundException, IOException, JMSException {
         super(new BorderLayout(10, 20)); 
-        this.filledOrders = filledOrders;
-        this.rejectedOrders = rejectedOrders;
         filledOrdersTable = buildOrdersTable(filledOrders, true);
         rejectedOrdersTable = buildOrdersTable(rejectedOrders, false);
         ordersStats = Arrays.asList(buildOrdersStats(java.util.stream.Stream.concat(filledOrders.stream(), rejectedOrders.stream()).collect(Collectors.toList())));
@@ -130,19 +124,5 @@ public final class OrdersPanel extends JPanel implements PanelCleanUp {
 	@Override
 	public void cleanUp() throws Exception {
 		Utility.shutdownExecutorService(es, 5, TimeUnit.SECONDS);
-	}
-	
-	private enum StatsLabel {
-		TOTAL("Total orders: "), BUY("Buy: "), SELL("Sell: "), MARKET("Market: "), LIMIT("Limit: "), STOP("Stop: "), FILLED("Filled: "), REJECTED("Rejected: ");
-		private final String description;
-		
-	    private StatsLabel(final String name) {
-	        this.description = name;
-	    }
-
-	    @Override
-	    public String toString() {
-	        return description;
-	    }
 	}
 }

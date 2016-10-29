@@ -23,10 +23,11 @@ import quickfix.SocketAcceptor;
 public final class TradingMachineServer {
 	private final static Logger logger = LoggerFactory.getLogger(TradingMachineServer.class);
 	private final SocketAcceptor acceptor;
+	private final TradingMachineFixAcceptorApplication application;
 
 	public TradingMachineServer() throws Exception {
 		final SessionSettings settings = getSessionSettings();
-		final TradingMachineFixAcceptorApplication application = new TradingMachineFixAcceptorApplication(settings);
+		application = new TradingMachineFixAcceptorApplication(settings);
 		final MessageStoreFactory messageStoreFactory = new FileStoreFactory(settings);
 		final LogFactory logFactory = new ScreenLogFactory(true, true, true);
 		final MessageFactory messageFactory = new DefaultMessageFactory();
@@ -45,6 +46,7 @@ public final class TradingMachineServer {
 
 	private void stop() {
 		acceptor.stop();
+		application.cleanUp();
 	}
 
 	public static void main(String[] args) throws Exception {
